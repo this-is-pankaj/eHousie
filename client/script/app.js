@@ -8,27 +8,23 @@ let boardMethods = {
         str += `</tr><tr>`
       }
       str += `<td id=${i} class="board-num"> ${i} </td>`;
+      this.generatedNum.push(i);
     }
     str += '</tr></table>';
     $(".game-board").html(str);
   },
   generateBoardNumber() {
     return new Promise((resolve, reject) => {
-      function generator() {
-        let num = Math.floor((Math.random()*89)+1);
+      function generator(max) {
+        let num = Math.floor(Math.random()*(max));
         return num;
       }
       
-      let num = generator();
-      if(this.generatedNum.indexOf(num)>-1){
-        console.log(num);
-        // Regenerate the board number if already gennerated number pops up.
-        
-      }
-      else{
-        this.generatedNum.push(num);
-        resolve(num);
-      }
+      let num = generator(this.generatedNum.length);
+
+      let selectedNum = this.generatedNum[num];
+      this.generatedNum.splice(num, 1);
+      resolve(selectedNum);
     })
   }
 }
