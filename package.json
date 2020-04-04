@@ -1,0 +1,23 @@
+{
+  "name": "ehousie",
+  "version": "1.0.0",
+  "description": "housie game online",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://this-is-pankaj:P@nks6789@github.com/this-is-pankaj/eHousie.git"
+  },
+  "author": "Pankaj Gupta",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/this-is-pankaj/eHousie/issues"
+  },
+  "homepage": "https://github.com/this-is-pankaj/eHousie#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
+}
