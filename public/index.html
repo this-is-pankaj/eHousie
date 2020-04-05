@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>eHousie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="./style/lib/bootstrap4.min.css"/>
+  <link rel="stylesheet" type="text/css" media="screen" href="./style/app.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="./script/app.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="table-responsive game-board text-center">
+      
+    </div>
+    <div class="board-manager hide">
+      <div class="content-section">
+        <h1 class="new-num text-center">And the number is...</h1>
+      </div>
+      <div class="game-options text-center">
+        <button class="btn btn-primary generate-number">Next Number</button>
+        <button class="btn btn-primary reset-game">Reset Game</button>
+      </div>
+    </div>
+  </div>
+  <div class="user-form-wrapper">
+    <div class="container user-form">
+      <div class="form-group">
+        <input type="text" class="form-control user-form-field" name="username" placeholder="Enter your Name"/>
+      </div>
+      <div class="form-group">
+        <input type="tel" class="form-control user-form-field" name="phone" placeholder="Enter your Mobile Number"/>
+      </div>
+      <div class="form-group">
+        <input type="email" class="form-control user-form-field" name="email" placeholder="Enter your Email ID"/>
+      </div>
+      <div class="user-form-options text-center">
+        <button class="btn btn-primary submit-info">Start Playing</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
