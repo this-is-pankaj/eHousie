@@ -97,3 +97,11 @@
 .user {
   list-style: none;
 }
+
+.ticket-num {
+  cursor: pointer;
+}
+
+.matched {
+  background: rgb(255, 116, 105);
+}

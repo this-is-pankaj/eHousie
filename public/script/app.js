@@ -51,6 +51,12 @@ let ticketMethods= {
         <h1 class="new-num text-center">And the number is...</h1>
       </div>`;
     $(".user-ticket-wrapper").html(str);
+    this.bindTicketMethod();
+  },
+  bindTicketMethod() {
+    $(".ticket-num").off().on("click", function(){
+      $(this).toggleClass("matched");
+    })
   }
 }
 
@@ -150,10 +156,19 @@ let initialize = ()=>{
     let newUser = data.newUser;
     let userList = data.users;
 
-    $(".notification").html(`<span class="notification-text">${newUser.username} joined </span>`);
+    $(".notification").html(`<span class="notification-text">${newUser} joined </span>`);
     playersMethod.generateList(userList);
     clearNotification();
-  })
+  });
+
+  socket.on('userLeft', (data)=>{
+    let userLeft = data.userLeft;
+    let userList = data.users;
+
+    $(".notification").html(`<span class="notification-text">${userLeft} left </span>`);
+    playersMethod.generateList(userList);
+    clearNotification();
+  });
 
   socket.on('your ticket', (data)=>{
     ticketMethods.generateTicket(data.ticket);

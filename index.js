@@ -12,10 +12,13 @@ app.use(express.static(`${__dirname}/public`));
 function generateUserNameList() {
   let list = [];
   for(let i in users) {
-    let info ={
-      username: users[i].username
+    // return only the name of active users
+    if(users[i].isActive) {
+      let info ={
+        username: users[i].username
+      }
+      list.push(info);
     }
-    list.push(info);
   }
   return list;
 }
@@ -36,9 +39,16 @@ io.on('connection', function(socket){
       if(userinfo.email===admin) {
         userinfo.role='admin';
       }
+      let ticketNumbers = users[userinfo.phone].ticket;
+      userinfo.ticket = ticketNumbers;
       users[userinfo.phone] = userinfo;
       socket.user = userinfo;
+      
       console.log(`${userinfo.username} Joined`);
+      socket.emit('your ticket', {
+        ticket: ticketNumbers,
+        users: generateUserNameList()
+      });
       socket.broadcast.emit('userReJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username
