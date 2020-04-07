@@ -12,14 +12,46 @@
   <script src="./script/app.js"></script>
 </head>
 <body>
+  <header class="header done">
+    <h1 class="text-center">eHousie</h1>
+  </header>
+  <div class="game-options view-game-options">
+    <button class="btn btn-primary view-board">Board</button>
+    <p class="notification"></p>
+    <button class="btn btn-primary view-players">Players</button>
+  </div>
   <div class="container">
-    <div class="table-responsive game-board text-center">
-      
-    </div>
-    <div class="board-manager hide">
-      <div class="content-section">
-        <h1 class="new-num text-center">And the number is...</h1>
+    <!-- Section for displaying the board -->
+    <div class="table-responsive game-board-wrapper text-center">
+      <h3>Game Board</h3>
+      <div class="game-board">
+
       </div>
+    </div>
+
+    <!-- Section for displaying the tickets -->
+    <div class="table-responsive text-center">
+      <h3>Your Ticket</h3>
+      <div class="user-ticket-wrapper">
+
+      </div>
+    </div>
+
+    <!-- Section for displaying current users -->
+    <div class="online-users-wrapper">
+      <div class="users-header">
+        <h3 class="text-center user-header-text"> Online Players</h3>
+        <div class="header-option">
+          <button class="btn btn-danger close-users">X</button>
+        </div>
+      </div>
+      <div class="users-list">
+
+      </div>
+    </div>
+
+    <!-- Section for managing admin interface -->
+    <div class="board-manager hide">
       <div class="game-options text-center">
         <button class="btn btn-primary generate-number">Next Number</button>
         <button class="btn btn-primary reset-game">Reset Game</button>

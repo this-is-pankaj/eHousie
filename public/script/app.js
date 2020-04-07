@@ -11,7 +11,10 @@ let boardMethods = {
       str += `<td id=${i} class="board-num"> ${i} </td>`;
       this.generatedNum.push(i);
     }
-    str += '</tr></table>';
+    str += `</tr></table>
+      <div class="content-section">
+        <h1 class="new-num text-center">And the number is...</h1>
+      </div>`;
     $(".game-board").html(str);
   },
   generateBoardNumber() {
@@ -33,12 +36,51 @@ let boardMethods = {
   }
 }
 
+let ticketMethods= {
+  generateTicket(ticket) {
+    let str ='<table class="table table-bordered">';
+    for(let row=0; row<ticket.length; row++) {
+      str += `<tr>`;
+      for(let col=0; col<ticket[row].length; col++) {
+        str += `<td id=${col} class="ticket-num"> ${ticket[row][col] || ''} </td>`;
+      }
+      str += `</tr>`;
+    }
+    str += `</table>
+      <div class="content-section">
+        <h1 class="new-num text-center">And the number is...</h1>
+      </div>`;
+    $(".user-ticket-wrapper").html(str);
+  }
+}
+
+let playersMethod = {
+  generateList(list) {
+    let str= `<ul class="users">`;
+    if(!list.length) {
+      str += `<li class="user"> Waiting for Other Users to Connect</li>`
+    }
+    else{
+      for(let i=0;i<list.length;i++){
+        str += `<li class="user">${list[i].username} </li>`;
+      }
+    }
+    str += `</ul>`
+    $(".users-list").html(str);
+  }
+}
+
 let initialize = ()=>{
   boardMethods.generateGameBoard();
+  // ticketMethods.generateTicket();
   const socket = io();
   socket.on('ongoingGame', (data)=>{
     let pickedNumbers = data.numbersPicked,
-      lastPicked = data.lastPicked;
+      lastPicked = data.lastPicked,
+      users = data.users;
+
+    playersMethod.generateList(users);
+
     if(!pickedNumbers.length) {
       $(".new-num").text(`And the number is...`);
       boardMethods.generateGameBoard();
@@ -51,6 +93,18 @@ let initialize = ()=>{
       $(`#${lastPicked}`).addClass("last");
     }
   });
+
+  $(".view-board").off().on("click", ()=>{
+    $(".game-board-wrapper").animate({
+      width: 'toggle'
+    });
+  });
+
+  $(".view-players, .close-users").off().on("click", ()=>{
+    $(".online-users-wrapper").animate({
+      width: 'toggle'
+    });
+  })
 
   $(".generate-number").off().on("click", async ()=>{
     let num = await boardMethods.generateBoardNumber();
@@ -87,14 +141,28 @@ let initialize = ()=>{
     }
     // If all values pass.. send the value to the server.
     socket.emit('userJoined', info);
+    $(".notification").html(`<span class="notification-text">You joined </span>`);
     $(".user-form-wrapper").remove();
+    clearNotification();
   });
 
   socket.on('userJoined', (data)=>{
     let newUser = data.newUser;
     let userList = data.users;
 
-    alert(`${newUser.username} just joined`);
+    $(".notification").html(`<span class="notification-text">${newUser.username} joined </span>`);
+    playersMethod.generateList(userList);
+    clearNotification();
   })
+
+  socket.on('your ticket', (data)=>{
+    ticketMethods.generateTicket(data.ticket);
+  })
+
+  function clearNotification() {
+    setTimeout(function(){
+      $(".notification").html('');
+    }, 2000);
+  }
 }
 $(document).ready(initialize);
