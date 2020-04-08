@@ -105,3 +105,19 @@
 .matched {
   background: rgb(255, 116, 105);
 }
+
+.btn-round {
+  min-width: 100px;
+  border: 1px solid #7ebf49;
+  color: #32681a;
+  margin: 5px;
+}
+
+.btn-round:disabled{
+  background: #d1cdcd;
+}
+
+.prize-title {
+  text-shadow: 2px 2px #54e3da;
+  color: #18b44d;
+}

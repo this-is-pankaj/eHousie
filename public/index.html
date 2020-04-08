@@ -16,13 +16,14 @@
     <h1 class="text-center">eHousie</h1>
   </header>
   <div class="game-options view-game-options">
-    <button class="btn btn-primary view-board">Board</button>
+    <button class="btn btn-primary view-board">View Board</button>
     <p class="notification"></p>
+    <p class="claim-notification"></p>
     <button class="btn btn-primary view-players">Players</button>
   </div>
   <div class="container">
     <!-- Section for displaying the board -->
-    <div class="table-responsive game-board-wrapper text-center">
+    <div class="table-responsive game-board-wrapper text-center hide">
       <h3>Game Board</h3>
       <div class="game-board">
 
@@ -55,6 +56,7 @@
       <div class="game-options text-center">
         <button class="btn btn-primary generate-number">Next Number</button>
         <button class="btn btn-primary reset-game">Reset Game</button>
+        <button class="btn btn-primary continue-game">Continue Game</button>
       </div>
     </div>
   </div>
@@ -73,6 +75,12 @@
         <button class="btn btn-primary submit-info">Start Playing</button>
       </div>
     </div>
+  </div>
+  <div class="audio-wrapper hide">
+    <audio controls id="picked">
+      <source src="./assets/picked.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
   </div>
 </body>
 </html>

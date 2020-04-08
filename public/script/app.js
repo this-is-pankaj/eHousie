@@ -37,7 +37,7 @@ let boardMethods = {
 }
 
 let ticketMethods= {
-  generateTicket(ticket) {
+  generateTicket(socket, ticket) {
     let str ='<table class="table table-bordered">';
     for(let row=0; row<ticket.length; row++) {
       str += `<tr>`;
@@ -49,13 +49,26 @@ let ticketMethods= {
     str += `</table>
       <div class="content-section">
         <h1 class="new-num text-center">And the number is...</h1>
+        <div class="player-options">
+          <h3 class="prize-title">Claim Prize</h3>
+          <button class="btn btn-round claim-btn first-line" data-prize="firstLine">1<sup>st</sup> Line </button>
+          <button class="btn btn-round claim-btn second-line" data-prize="secondLine">2<sup>nd</sup> Line </button>
+          <button class="btn btn-round claim-btn third-line" data-prize="thirdLine">3<sup>rd</sup> Line </button>
+          <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1">Full House (1<sup>st</sup>) </button>
+          <button class="btn btn-round claim-btn full-house-2" data-prize="fullHouse2">Full House (2<sup>nd</sup> </button>
+        </div>
       </div>`;
     $(".user-ticket-wrapper").html(str);
-    this.bindTicketMethod();
+    this.bindTicketMethod(socket);
   },
-  bindTicketMethod() {
+  bindTicketMethod(socket) {
     $(".ticket-num").off().on("click", function(){
       $(this).toggleClass("matched");
+    });
+
+    $(".claim-btn").off().on("click", function(){
+      socket.emit("claimPrize", {type: $(this).data("prize")});
+      $(this).attr("disabled", true);
     })
   }
 }
@@ -121,7 +134,16 @@ let initialize = ()=>{
     socket.emit('resetGame', {});
   });
 
+  $(".continue-game").off().on("click", ()=>{
+    socket.emit('continueGame', {});
+  });
+
+  socket.on('continueGame', (data)=>{
+    cleanUpdateColumn();
+  })
+
   socket.on('newNumber', (data)=>{
+    $("#picked").trigger("play");
     let num = data.newNum;
     $(".done").removeClass("last");
     $(".new-num").text(num);
@@ -147,7 +169,7 @@ let initialize = ()=>{
     }
     // If all values pass.. send the value to the server.
     socket.emit('userJoined', info);
-    $(".notification").html(`<span class="notification-text">You joined </span>`);
+    $(".notification").html(`<span class="notification-text">You joined </span>`).removeClass("hide");
     $(".user-form-wrapper").remove();
     clearNotification();
   });
@@ -156,7 +178,7 @@ let initialize = ()=>{
     let newUser = data.newUser;
     let userList = data.users;
 
-    $(".notification").html(`<span class="notification-text">${newUser} joined </span>`);
+    $(".notification").html(`<span class="notification-text">${newUser} joined </span>`).removeClass("hide");
     playersMethod.generateList(userList);
     clearNotification();
   });
@@ -165,19 +187,38 @@ let initialize = ()=>{
     let userLeft = data.userLeft;
     let userList = data.users;
 
-    $(".notification").html(`<span class="notification-text">${userLeft} left </span>`);
+    $(".notification").html(`<span class="notification-text">${userLeft} left </span>`).removeClass("hide");
     playersMethod.generateList(userList);
     clearNotification();
   });
 
   socket.on('your ticket', (data)=>{
-    ticketMethods.generateTicket(data.ticket);
+    ticketMethods.generateTicket(socket, data.ticket);
+  });
+
+  socket.on('prizeClaim', (data)=>{
+    clearNotification();
+    $(".claim-notification").removeClass("hide").append(`${data.claimedBy} has claimed for ${data.prize.text}<br/>`);
+    $(`[data-prize=${data.prize.type}]`).remove();
+  });
+
+  socket.on('alreadyClaimed', (data)=> {
+    clearNotification();
+    $(".claim-notification").removeClass("hide").append(`${data.claimedBy} has already claimed for ${data.prize.text}<br/>`);
+  });
+
+  socket.on('reviewClaim', (data)=>{
+    console.log(data);
   })
 
   function clearNotification() {
     setTimeout(function(){
-      $(".notification").html('');
-    }, 2000);
+      $(".notification").html('').addClass("hide");
+    }, 3000);
+  }
+
+  function cleanUpdateColumn () {
+    $(".claim-notification").addClass("hide").html("");
   }
 }
 $(document).ready(initialize);
