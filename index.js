@@ -9,6 +9,16 @@ const admin = {
   id: ''
 };
 const prizes = {
+  early7: {
+    isActive: true,
+    displayText: "Early 7",
+    claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
+  },
+  corners: {
+    isActive: true,
+    displayText: "Corners",
+    claimedBy: []
+  },
   firstLine: {
     isActive: true,
     displayText: "First Line",
@@ -134,42 +144,107 @@ io.on('connection', function(socket){
 
   socket.on('claimPrize', (info)=>{
     try{
-      let claimList = prizes[info.type].claimedBy;
-      if(prizes[info.type].isActive) {
-        prizes[info.type].isActive = false;
-        prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
-        // Inform all users about the claim
-        io.emit('prizeClaim', {
-          prize: {
-            type: info.type,
-            text: prizes[info.type].displayText
-          },
-          claimedBy: socket.user.username
-        });
+      // Check if the user is not boogied
+      if(!users[socket.user.phone].isBoogie){
+        let claimList = prizes[info.type].claimedBy;
+        if(prizes[info.type].isActive) {
+          if(socket.user){
+            prizes[info.type].isActive = false;
+            prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
+            // Inform all users about the claim
+            io.emit('prizeClaim', {
+              prize: {
+                type: info.type,
+                text: prizes[info.type].displayText
+              },
+              claimedBy: socket.user.username
+            });
 
-        io.to(admin.id).emit('reviewClaim', {
-          prize: {
-            type: info.type,
-            text: prizes[info.type].displayText
-          },
-          ticket: users[socket.user.phone].ticket,
-          claimedBy: socket.user.phone
-        })
+            io.to(admin.id).emit('reviewClaim', {
+              prize: {
+                type: info.type,
+                text: prizes[info.type].displayText
+              },
+              ticket: users[socket.user.phone].ticket,
+              claimedBy: {
+                id: socket.user.phone,
+                username: socket.user.username
+              }
+            })
+          }
+        }
+        else {
+          prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
+          socket.emit('alreadyClaimed', {
+            prize: {
+              type: info.type,
+              text: prizes[info.type].displayText
+            },
+            claimedBy: claimList[claimList.length-1].user.username
+          }) 
+        }
       }
-      else {
-        prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
-        socket.emit('alreadyClaimed', {
-          prize: {
-            type: info.type,
-            text: prizes[info.type].displayText
-          },
-          claimedBy: claimList[claimList.length-1].user
-        }) 
+      else{
+        socket.emit('boogie');
       }
     }
     catch(exc) {
 
     }
+  });
+
+  socket.on('validation', (report)=>{
+    console.log(`Validation Report ${JSON.stringify(report)}`);
+    let userInfo = users[report.id] || {};   //Socket Id of the claimee
+    let prizeClaimed = report.prizeType;
+    // If a user was not boogied, push the prize.
+    // Else activate the prize again
+    if(!userInfo.isBoogie) {
+      let user = prizes[prizeClaimed].claimedBy.filter((user)=>{
+        if(userInfo.id === user.id){
+          user.isClaimValid = report.isClaimValid;
+          return user;
+        }
+      });
+      // If the user is inn the array, inform others on the valiidation result
+      // Else open the prize for others.
+      if(user && user.length) {
+        // boogie the user if the claim is wrong
+        if(!report.isClaimValid) {
+          userInfo.isBoogie = true;
+          prizes[prizeClaimed].isActive = true;
+        }
+        else{
+          prizes[prizeClaimed].isActive = false;
+        }
+        io.emit('claimReviewed', {
+          isClaimValid: report.isClaimValid,
+          prize: {
+            type: prizeClaimed,
+            text: prizes[prizeClaimed].displayText
+          },
+          claimedBy: userInfo.username
+        })
+        // Send info to the claimee about his claim.
+        // io.to(user.id).emit('yourClaimResult', {
+          
+        // })
+      }
+      else{
+        io.emit('claimReviewed', {
+          isClaimValid: false,
+          prize: {
+            type: prizeClaimed,
+            text: prize[prizeClaimed].displayText
+          },
+          claimedBy: userInfo.username
+        })
+      }
+    }
+    else{
+      prizes[prizeClaimed].isActive = true;
+    }
+    console.log(`Prize status ${JSON.stringify(prizes[prizeClaimed])}`);
   })
 
   socket.on('continueGame', ()=>{

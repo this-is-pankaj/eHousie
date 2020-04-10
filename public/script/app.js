@@ -54,6 +54,8 @@ let ticketMethods= {
           <button class="btn btn-round claim-btn first-line" data-prize="firstLine">1<sup>st</sup> Line </button>
           <button class="btn btn-round claim-btn second-line" data-prize="secondLine">2<sup>nd</sup> Line </button>
           <button class="btn btn-round claim-btn third-line" data-prize="thirdLine">3<sup>rd</sup> Line </button>
+          <button class="btn btn-round claim-btn third-line" data-prize="early7">Early 7</button>
+          <button class="btn btn-round claim-btn third-line" data-prize="corners">Corners</button>
           <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1">Full House (1<sup>st</sup>) </button>
           <button class="btn btn-round claim-btn full-house-2" data-prize="fullHouse2">Full House (2<sup>nd</sup> </button>
         </div>
@@ -86,6 +88,20 @@ let playersMethod = {
     }
     str += `</ul>`
     $(".users-list").html(str);
+  }
+}
+
+let adminConsole = {
+  bindValidators(socket) {
+    $(".claim-validator").off().on("click", function(){
+      let obj = {
+        id: $(this).parents(".claim-item").attr("id"),
+        prizeType: $(this).parents(".claim-item").data("prize"),
+        isClaimValid: $(this).data("status")
+      }
+
+      socket.emit('validation', obj);
+    })
   }
 }
 
@@ -199,7 +215,7 @@ let initialize = ()=>{
   socket.on('prizeClaim', (data)=>{
     clearNotification();
     $(".claim-notification").removeClass("hide").append(`${data.claimedBy} has claimed for ${data.prize.text}<br/>`);
-    $(`[data-prize=${data.prize.type}]`).remove();
+    $(`[data-prize=${data.prize.type}]`).addClass("hide");
   });
 
   socket.on('alreadyClaimed', (data)=> {
@@ -209,6 +225,41 @@ let initialize = ()=>{
 
   socket.on('reviewClaim', (data)=>{
     console.log(data);
+    let str = `<li class="claim-item" id="${data.claimedBy.id}" data-prize=${data.prize.type}>
+      <p class="claimed-by">${data.claimedBy.username} has claimed for ${data.prize.text}.</p>
+      <p> 
+        <button class="btn btn-success claim-validator" data-status=true>Approve</button>
+        <button class="btn btn-danger claim-validator" data-status=false>Reject</button> 
+      </p>
+      <h5>Ticket: </h5>
+      <table class="table table-bordered">`;
+      for(let t=0; t<data.ticket.length; t++) {
+        str +=`<tr>`
+        for(let n=0; n<data.ticket[t].length;n++) {
+          str += `<td> ${data.ticket[t][n] || ''} </td>`
+        }
+        str +=`</tr>`
+      }
+      str += `</table>
+    </li>`;
+    $(".claim-list").append(str);
+    adminConsole.bindValidators(socket);
+  });
+
+  socket.on('claimReviewed', (data)=>{
+    console.log(data);
+    if(data.isClaimValid) {
+      $(".claim-notification").removeClass("hide").append(`${data.claimedBy} has claimed for ${data.prize.text} and WON!<br/>`);
+      $(`[data-prize=${data.prize.type}]`).addClass("hide");
+    }
+    else{
+      $(".claim-notification").removeClass("hide").append(`${data.claimedBy} has claimed for ${data.prize.text} and has been BBOOGIEEEDD!<br/>`);
+      $(`[data-prize=${data.prize.type}]`).removeClass("hide");
+    }
+  });
+
+  socket.on('boogie', ()=>{
+    $(".claim-btn").remove();
   })
 
   function clearNotification() {
