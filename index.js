@@ -63,6 +63,33 @@ function generateUserNameList() {
   return list;
 }
 
+function winnerStats() {
+  return new Promise((resolve, reject)=>{
+    try {
+      let winners = [];
+      for(let type in prizes) {
+        let prize = prizes[type];
+        let info = {};
+        if(!prize.isActive) {
+          info.text = prize.displayText;
+          let winner = prize.claimedBy.filter((obj)=>{
+            if(obj.isClaimValid) {
+              return obj;
+            }
+          })
+          info.winner = winner.user.username;
+        }
+        winners.push(info);
+      }
+      resolve(winners);
+    }
+    catch(exc) {
+      console.log(`Exception handled for generating prize: ${exc}`);
+      reject(exc);
+    }
+  })
+}
+
 io.on('connection', function(socket){
   // if(users.length){
     io.emit('ongoingGame', {
@@ -92,7 +119,7 @@ io.on('connection', function(socket){
         ticket: ticketNumbers,
         users: generateUserNameList()
       });
-      socket.broadcast.emit('userJoined', {
+      io.emit('userJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username
       });
@@ -118,7 +145,7 @@ io.on('connection', function(socket){
         ticket: ticketNumbers,
         users: generateUserNameList()
       });
-      socket.broadcast.emit('userJoined', {
+      io.emit('userJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username,
       });
@@ -245,6 +272,15 @@ io.on('connection', function(socket){
       prizes[prizeClaimed].isActive = true;
     }
     console.log(`Prize status ${JSON.stringify(prizes[prizeClaimed])}`);
+  });
+
+  socket.on('gameOver', async ()=>{
+    // Show the users the screen with winners name and prizes
+    let winners = await winnerStats()
+      .catch((err)=>{
+        return [];
+      })
+    io.emit('gameOver', winners);
   })
 
   socket.on('continueGame', ()=>{

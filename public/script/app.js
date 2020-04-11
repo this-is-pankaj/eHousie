@@ -154,6 +154,10 @@ let initialize = ()=>{
     socket.emit('continueGame', {});
   });
 
+  $(".game-over").off().on("click", ()=>{
+    socket.emit('gameOver');
+  })
+
   socket.on('continueGame', (data)=>{
     cleanUpdateColumn();
   })
@@ -260,7 +264,11 @@ let initialize = ()=>{
 
   socket.on('boogie', ()=>{
     $(".claim-btn").remove();
-  })
+  });
+
+  socket.on('gameOver', (winners)=>{
+    console.log(winners);
+  });
 
   function clearNotification() {
     setTimeout(function(){
