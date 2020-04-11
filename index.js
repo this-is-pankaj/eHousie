@@ -77,9 +77,9 @@ function winnerStats() {
               return obj;
             }
           })
-          info.winner = winner.user.username;
+          info.winner = winner[0].user.username;
+          winners.push(info);
         }
-        winners.push(info);
       }
       resolve(winners);
     }
@@ -121,7 +121,8 @@ io.on('connection', function(socket){
       });
       io.emit('userJoined', {
         users: generateUserNameList(), 
-        newUser: userinfo.username
+        newUser: userinfo.username,
+        role: userinfo.role
       });
     }
     else {
@@ -148,6 +149,7 @@ io.on('connection', function(socket){
       io.emit('userJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username,
+        role: userinfo.role
       });
     } 
   })

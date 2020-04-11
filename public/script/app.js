@@ -156,6 +156,10 @@ let initialize = ()=>{
 
   $(".game-over").off().on("click", ()=>{
     socket.emit('gameOver');
+  });
+
+  $(".close-prize").off().on("click", function(){
+    $(this).parents(".claim-notification").addClass("hide");
   })
 
   socket.on('continueGame', (data)=>{
@@ -184,9 +188,6 @@ let initialize = ()=>{
       }
     }
 
-    if(info.email === 'panks@8013545945.ph') {
-      boardMethods.enableAdminConsole();
-    }
     // If all values pass.. send the value to the server.
     socket.emit('userJoined', info);
     $(".notification").html(`<span class="notification-text">You joined </span>`).removeClass("hide");
@@ -197,9 +198,12 @@ let initialize = ()=>{
   socket.on('userJoined', (data)=>{
     let newUser = data.newUser;
     let userList = data.users;
-
+    console.log(data);
     $(".notification").html(`<span class="notification-text">${newUser} joined </span>`).removeClass("hide");
     playersMethod.generateList(userList);
+    if(data.role === 'admin'){
+      boardMethods.enableAdminConsole();
+    }
     clearNotification();
   });
 
@@ -218,13 +222,13 @@ let initialize = ()=>{
 
   socket.on('prizeClaim', (data)=>{
     clearNotification();
-    $(".claim-notification").removeClass("hide").append(`${data.claimedBy} has claimed for ${data.prize.text}<br/>`);
+    $(".claim-notification").removeClass("hide").find('.prize-body').append(`<p class="prize-text">${data.claimedBy} has claimed for ${data.prize.text}</p>`);
     $(`[data-prize=${data.prize.type}]`).addClass("hide");
   });
 
   socket.on('alreadyClaimed', (data)=> {
     clearNotification();
-    $(".claim-notification").removeClass("hide").append(`${data.claimedBy} has already claimed for ${data.prize.text}<br/>`);
+    $(".claim-notification").removeClass("hide").find('.prize-body').append(`<p class="prize-text">${data.claimedBy} has already claimed for ${data.prize.text}</p>`);
   });
 
   socket.on('reviewClaim', (data)=>{
@@ -253,11 +257,11 @@ let initialize = ()=>{
   socket.on('claimReviewed', (data)=>{
     console.log(data);
     if(data.isClaimValid) {
-      $(".claim-notification").removeClass("hide").append(`${data.claimedBy} has claimed for ${data.prize.text} and WON!<br/>`);
+      $(".claim-notification").removeClass("hide").find(".prize-body").append(`<p class="prize-text">${data.claimedBy} has claimed for ${data.prize.text} and WON!</p>`);
       $(`[data-prize=${data.prize.type}]`).addClass("hide");
     }
     else{
-      $(".claim-notification").removeClass("hide").append(`${data.claimedBy} has claimed for ${data.prize.text} and has been BBOOGIEEEDD!<br/>`);
+      $(".claim-notification").removeClass("hide").find(".prize-body").append(`<p class="prize-text">${data.claimedBy} has claimed for ${data.prize.text} and has been BBOOGIEEEDD!</p>`);
       $(`[data-prize=${data.prize.type}]`).removeClass("hide");
     }
   });
@@ -268,6 +272,14 @@ let initialize = ()=>{
 
   socket.on('gameOver', (winners)=>{
     console.log(winners);
+    let str=`<h2 class="text-center">Game Over</h2>`;
+    if(winners.length){
+      str = `<h2 class="text-cennter"> Winners </h2>`;
+      for(let i=0; i<winners.length; i++) {
+        str += `<p class="winner prize-text">${winners[i].text} : ${winners[i].winner}`;
+      }
+    }
+    $(".claim-notification").removeClass("hide").find(".prize-body").addClass("game-over").html(str);
   });
 
   function clearNotification() {
@@ -277,7 +289,7 @@ let initialize = ()=>{
   }
 
   function cleanUpdateColumn () {
-    $(".claim-notification").addClass("hide").html("");
+    $(".claim-notification").addClass("hide").find(".prize-body").html("");
   }
 }
 $(document).ready(initialize);
