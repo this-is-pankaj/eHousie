@@ -5,7 +5,7 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const ticket = require('./server/generateTicket');
 const admin = {
-  email: 'panks@8013545945.ph',
+  email: process.env.admin || 'admin',
   id: ''
 };
 const prizes = {
