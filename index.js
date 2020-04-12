@@ -8,43 +8,7 @@ const admin = {
   email: process.env.admin || 'admin',
   id: ''
 };
-const prizes = {
-  early7: {
-    isActive: true,
-    displayText: "Early 7",
-    claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
-  },
-  corners: {
-    isActive: true,
-    displayText: "Corners",
-    claimedBy: []
-  },
-  firstLine: {
-    isActive: true,
-    displayText: "First Line",
-    claimedBy: []
-  },
-  secondLine: {
-    isActive: true,
-    displayText: "Second Line",
-    claimedBy: []
-  },
-  thirdLine: {
-    isActive: true,
-    displayText: "Third Line",
-    claimedBy: []
-  },
-  fullHouse1: {
-    isActive: true,
-    displayText: "1st Full House",
-    claimedBy: []
-  },
-  fullHouse2: {
-    isActive: true,
-    displayText: "2nd Full House",
-    claimedBy: []
-  }
-}
+const prizes = require('./server/config/prizes.constant');
 let numbersPicked = [];
 let users = {};
 app.use(express.static(`${__dirname}/public`));
@@ -306,6 +270,6 @@ io.on('connection', function(socket){
   });
 });
 
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+http.listen(80, function(){
+  console.log('listening on *:80');
 });
