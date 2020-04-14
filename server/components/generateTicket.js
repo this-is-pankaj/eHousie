@@ -1,44 +1,6 @@
 const methods = {};
-const numConfig = {
-  maxNumInCol: 3,
-  minNumInCol: 2,
-  numInCol: [{
-    min: 1,
-    max: 9
-  },
-  {
-    min: 10,
-    max: 19
-  },
-  {
-    min: 20,
-    max: 29
-  },
-  {
-    min: 30,
-    max: 39
-  },
-  {
-    min: 40,
-    max: 49
-  },
-  {
-    min: 50,
-    max: 59
-  },
-  {
-    min: 60,
-    max: 69
-  },
-  {
-    min: 70,
-    max: 79
-  },
-  {
-    min: 80,
-    max: 90
-  }]
-}
+const appStatic = require('./config/app.constant');
+const numConfig = appStatic.numConfig;
 
 methods.generateNum = (min, max, count)=>{
   return new Promise((resolve, reject)=>{
@@ -86,7 +48,7 @@ methods.generateTicket = (numList) => {
       // console.log(`Columns pushed ${columnsPushed}The 2 rows missed the ${missedCols} columns`)
       await pickValidNumbers(ticket[2], missedCols)
         .catch((err)=>{
-          console.log(`Error Occurr ed when genenrating ticket ${err}`);
+          console.log(`Error Occurred when genenrating ticket ${err}`);
         })
     }
     console.log(ticket);

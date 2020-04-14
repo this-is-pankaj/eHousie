@@ -3,10 +3,10 @@ const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-const ticket = require('./server/generateTicket');
+const ticket = require('./server/components/generateTicket');
 const admin = {
-  email: process.env.admin || 'admin',
-  id: ''
+  email: process.env.admin,
+  id: ''  //Socket ID of the user
 };
 const prizes = require('./server/config/prizes.constant');
 let numbersPicked = [];
@@ -25,33 +25,6 @@ function generateUserNameList() {
     }
   }
   return list;
-}
-
-function winnerStats() {
-  return new Promise((resolve, reject)=>{
-    try {
-      let winners = [];
-      for(let type in prizes) {
-        let prize = prizes[type];
-        let info = {};
-        if(!prize.isActive) {
-          info.text = prize.displayText;
-          let winner = prize.claimedBy.filter((obj)=>{
-            if(obj.isClaimValid) {
-              return obj;
-            }
-          })
-          info.winner = winner[0].user.username;
-          winners.push(info);
-        }
-      }
-      resolve(winners);
-    }
-    catch(exc) {
-      console.log(`Exception handled for generating prize: ${exc}`);
-      reject(exc);
-    }
-  })
 }
 
 io.on('connection', function(socket){
@@ -167,14 +140,14 @@ io.on('connection', function(socket){
           }
         }
         else {
-          prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
           socket.emit('alreadyClaimed', {
             prize: {
               type: info.type,
               text: prizes[info.type].displayText
             },
             claimedBy: claimList[claimList.length-1].user.username
-          }) 
+          });
+          prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
         }
       }
       else{
@@ -242,7 +215,7 @@ io.on('connection', function(socket){
 
   socket.on('gameOver', async ()=>{
     // Show the users the screen with winners name and prizes
-    let winners = await winnerStats()
+    let winners = await winnersList()
       .catch((err)=>{
         return [];
       })
