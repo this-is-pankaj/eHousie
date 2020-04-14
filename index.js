@@ -5,7 +5,7 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const ticket = require('./server/generateTicket');
 const admin = {
-  email: process.env.admin || 'admin',
+  email: process.env.admin,
   id: ''
 };
 const prizes = require('./server/config/prizes.constant');
@@ -167,14 +167,14 @@ io.on('connection', function(socket){
           }
         }
         else {
-          prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
           socket.emit('alreadyClaimed', {
             prize: {
               type: info.type,
               text: prizes[info.type].displayText
             },
-            claimedBy: claimList[claimList.length-1].user.username
-          }) 
+            claimedBy: 'Someone'
+          });
+          // prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
         }
       }
       else{
