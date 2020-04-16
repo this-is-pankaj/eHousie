@@ -8,7 +8,7 @@ let boardMethods = {
       if(i%10 === 1){
         str += `</tr><tr>`
       }
-      str += `<td id=${i} class="board-num"> ${i} </td>`;
+      str += `<td id=b${i} class="board-num"> ${i} </td>`;
       this.generatedNum.push(i);
     }
     str += `</tr></table>
@@ -42,7 +42,7 @@ let ticketMethods= {
     for(let row=0; row<ticket.length; row++) {
       str += `<tr>`;
       for(let col=0; col<ticket[row].length; col++) {
-        str += `<td id=${col} class="ticket-num"> ${ticket[row][col] || ''} </td>`;
+        str += `<td id=t${col} class="ticket-num"> ${ticket[row][col] || ''} </td>`;
       }
       str += `</tr>`;
     }
@@ -55,7 +55,8 @@ let ticketMethods= {
           <button class="btn btn-round claim-btn second-line" data-prize="secondLine">2<sup>nd</sup> Line </button>
           <button class="btn btn-round claim-btn third-line" data-prize="thirdLine">3<sup>rd</sup> Line </button>
           <button class="btn btn-round claim-btn third-line" data-prize="early7">Early 7</button>
-          <button class="btn btn-round claim-btn third-line" data-prize="corners">Corners</button>
+          <button class="btn btn-round claim-btn third-line" data-prize="corners">6 Corners</button>
+          <button class="btn btn-round claim-btn pyramid" data-prize="pyramid">Pyramid</button>
           <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1">Full House (1<sup>st</sup>) </button>
           <button class="btn btn-round claim-btn full-house-2" data-prize="fullHouse2">Full House (2<sup>nd</sup> </button>
         </div>
@@ -171,7 +172,7 @@ let initialize = ()=>{
     let num = data.newNum;
     $(".done").removeClass("last");
     $(".new-num").text(num);
-    $(`#${num}`).text(num).addClass("done last");
+    $(`#b${num}`).text(num).addClass("done last");
   });
 
   $(".submit-info").off().on("click", ()=>{
@@ -217,7 +218,9 @@ let initialize = ()=>{
   });
 
   socket.on('your ticket', (data)=>{
-    ticketMethods.generateTicket(socket, data.ticket);
+    if(data.ticket && data.ticket.length){
+      ticketMethods.generateTicket(socket, data.ticket);
+    }
   });
 
   socket.on('prizeClaim', (data)=>{
@@ -280,7 +283,16 @@ let initialize = ()=>{
       }
     }
     $(".claim-notification").removeClass("hide").find(".prize-body").addClass("game-over").html(str);
+    storageMethods.resetStorageValues(locConfig, ticketMatch);
   });
+
+  socket.on('disconnect', ()=>{
+    $(".support").removeClass("hide");
+  });
+
+  $(".reload").off().on("click", function(){
+    window.location.reload();
+  })
 
   function clearNotification() {
     setTimeout(function(){

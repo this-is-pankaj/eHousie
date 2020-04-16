@@ -40,9 +40,11 @@ function winnerStats() {
             if(obj.isClaimValid) {
               return obj;
             }
-          })
-          info.winner = winner[0].user.username;
-          winners.push(info);
+          });
+          if(winner && winner.length) {
+            info.winner = winner[0].user.username;
+            winners.push(info);
+          }
         }
       }
       resolve(winners);
@@ -141,6 +143,7 @@ io.on('connection', function(socket){
       if(!users[socket.user.phone].isBoogie){
         let claimList = prizes[info.type].claimedBy;
         if(prizes[info.type].isActive) {
+          console.log(`prize claimed by ${socket.user.username}`)
           if(socket.user){
             prizes[info.type].isActive = false;
             prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
@@ -254,15 +257,16 @@ io.on('connection', function(socket){
   })
 
   // when the user disconnects.. perform this
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
     try{
-      console.log(`${socket.user.username} left`);
+      console.log(`${socket.user.username} left because of ${reason}`);
       users[socket.user.phone].isActive = false;
       // echo globally that this client has left
       socket.broadcast.emit('userLeft', {
         users: generateUserNameList(),
         userLeft: socket.user.username
       });
+      socket.emit('youLeft');
     }
     catch(exc){
 

@@ -9,6 +9,11 @@ module.exports = {
     displayText: "Corners",
     claimedBy: []
   },
+  pyramid: {
+    isActive: true,
+    displayText: "Pyramid",
+    claimedBy: []
+  },
   firstLine: {
     isActive: true,
     displayText: "First Line",
