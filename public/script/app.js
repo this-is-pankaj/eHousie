@@ -51,6 +51,7 @@ let ticketMethods= {
         <h1 class="new-num text-center">And the number is...</h1>
         <div class="player-options">
           <h3 class="prize-title">Claim Prize</h3>
+          <button class="btn btn-round claim-btn love-at-first-call" data-prize="loveAtFirstCall">Love @ 1<sup>st</sup> Call </button>
           <button class="btn btn-round claim-btn first-line" data-prize="firstLine">1<sup>st</sup> Line </button>
           <button class="btn btn-round claim-btn second-line" data-prize="secondLine">2<sup>nd</sup> Line </button>
           <button class="btn btn-round claim-btn third-line" data-prize="thirdLine">3<sup>rd</sup> Line </button>

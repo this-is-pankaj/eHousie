@@ -38,5 +38,10 @@ module.exports = {
     isActive: true,
     displayText: "2nd Full House",
     claimedBy: []
+  },
+  loveAtFirstCall: {
+    isActive: true,
+    displayText: "Love @ first Call",
+    claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
   }
 };
