@@ -39,6 +39,11 @@ module.exports = {
     displayText: "2nd Full House",
     claimedBy: []
   },
+  fullHouse3: {
+    isActive: true,
+    displayText: "3rd Full House",
+    claimedBy: []
+  },
   loveAtFirstCall: {
     isActive: true,
     displayText: "Love @ first Call",

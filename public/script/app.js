@@ -60,6 +60,7 @@ let ticketMethods= {
           <button class="btn btn-round claim-btn pyramid" data-prize="pyramid">Pyramid</button>
           <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1">Full House (1<sup>st</sup>) </button>
           <button class="btn btn-round claim-btn full-house-2" data-prize="fullHouse2">Full House (2<sup>nd</sup> </button>
+            <button class="btn btn-round claim-btn full-house-3" data-prize="fullHouse3">Full House (3<sup>rd</sup> </button>
         </div>
       </div>`;
     $(".user-ticket-wrapper").html(str);
