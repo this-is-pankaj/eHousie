@@ -60,7 +60,6 @@ let ticketMethods= {
           <button class="btn btn-round claim-btn pyramid" data-prize="pyramid">Pyramid</button>
           <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1">Full House (1<sup>st</sup>) </button>
           <button class="btn btn-round claim-btn full-house-2" data-prize="fullHouse2">Full House (2<sup>nd</sup> </button>
-            <button class="btn btn-round claim-btn full-house-3" data-prize="fullHouse3">Full House (3<sup>rd</sup> </button>
         </div>
       </div>`;
     $(".user-ticket-wrapper").html(str);
@@ -125,10 +124,10 @@ let initialize = ()=>{
     }
     else{
       for(let i=0; i<pickedNumbers.length; i++) {
-        $(`#${pickedNumbers[i]}`).text(pickedNumbers[i]).addClass("done");
+        $(`#b${pickedNumbers[i]}`).text(pickedNumbers[i]).addClass("done");
       }
-
-      $(`#${lastPicked}`).addClass("last");
+      $(".new-num").text(lastPicked);
+      $(`#b${lastPicked}`).addClass("last");
     }
   });
 
@@ -271,8 +270,12 @@ let initialize = ()=>{
     }
   });
 
-  socket.on('boogie', ()=>{
+  socket.on('boogie', (data)=>{
     $(".claim-btn").remove();
+
+    if(data && data.spoiler) {
+      $(".board-manager").remove();
+    }
   });
 
   socket.on('gameOver', (winners)=>{

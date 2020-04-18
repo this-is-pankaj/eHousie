@@ -12,6 +12,7 @@ const prizes = require('./server/config/prizes.constant');
 let numbersPicked = [];
 let users = {};
 app.use(express.static(`${__dirname}/public`));
+let kickedUsers = [];
 
 function generateUserNameList() {
   let list = [];
@@ -67,6 +68,14 @@ io.on('connection', function(socket){
   
   socket.on('userJoined', async function(userinfo){
     userinfo.isActive = true;
+    try{
+      if(kickedUsers.indexOf(userinfo.phone)>-1) {
+        socket.disconnect();
+      }
+    }
+    catch(exc){
+      console.log(`Exception when validating user kicked ${exc}`)
+    }
     // Check if user is admin
     if(userinfo.email===admin.email) {
       userinfo.role='admin';
@@ -121,12 +130,23 @@ io.on('connection', function(socket){
   })
 
   socket.on('numberPicked', function(msg){
-    console.log('Number Picked: ' + msg);
-    numbersPicked.push(msg);
-    io.emit('newNumber', {
-      newNum: msg, 
-      numbersPicked
-    });
+    console.log(`Number Picked: ${msg} by ${socket.user.username}`);
+    if(socket.user.email === admin.email || socket.id === admin.id) {
+      numbersPicked.push(msg);
+      io.emit('newNumber', {
+        newNum: msg, 
+        numbersPicked
+      });
+    }
+    else {
+      try{
+        socket.emit('boogie', {spoiler: true});
+        kickedUsers.push(socket.user.phone);
+      }
+      catch(exc){
+        console.log(`Exception when kicking user ouit: ${exc}`)
+      }
+    }
   });
 
   socket.on('resetGame', function(msg){
