@@ -51,15 +51,16 @@ let ticketMethods= {
         <h1 class="new-num text-center">And the number is...</h1>
         <div class="player-options">
           <h3 class="prize-title">Claim Prize</h3>
-          <button class="btn btn-round claim-btn love-at-first-call" data-prize="loveAtFirstCall">Love @ 1<sup>st</sup> Call </button>
-          <button class="btn btn-round claim-btn first-line" data-prize="firstLine">1<sup>st</sup> Line </button>
-          <button class="btn btn-round claim-btn second-line" data-prize="secondLine">2<sup>nd</sup> Line </button>
-          <button class="btn btn-round claim-btn third-line" data-prize="thirdLine">3<sup>rd</sup> Line </button>
-          <button class="btn btn-round claim-btn third-line" data-prize="early7">Early 7</button>
-          <button class="btn btn-round claim-btn third-line" data-prize="corners">6 Corners</button>
-          <button class="btn btn-round claim-btn pyramid" data-prize="pyramid">Pyramid</button>
-          <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1">Full House (1<sup>st</sup>) </button>
-          <button class="btn btn-round claim-btn full-house-2" data-prize="fullHouse2">Full House (2<sup>nd</sup> </button>
+          <button class="btn btn-round claim-btn love-at-first-call" data-prize="loveAtFirstCall" disabled>Love @ 1<sup>st</sup> Call </button>
+          <button class="btn btn-round claim-btn first-line" data-prize="firstLine" disabled>1<sup>st</sup> Line </button>
+          <button class="btn btn-round claim-btn second-line" data-prize="secondLine" disabled>2<sup>nd</sup> Line </button>
+          <button class="btn btn-round claim-btn third-line" data-prize="thirdLine" disabled>3<sup>rd</sup> Line </button>
+          <button class="btn btn-round claim-btn third-line" data-prize="early7" disabled>Early 7</button>
+          <button class="btn btn-round claim-btn third-line" data-prize="corners" disabled>6 Corners</button>
+          <button class="btn btn-round claim-btn pyramid" data-prize="pyramid" disabled>Pyramid</button>
+          <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1" disabled>Full House (1<sup>st</sup>) </button>
+          <button class="btn btn-round claim-btn full-house-2" data-prize="fullHouse2" disabled>Full House (2<sup>nd</sup>) </button>
+            <button class="btn btn-round claim-btn full-house-3" data-prize="fullHouse3" disabled>Full House (3<sup>rd</sup>) </button>
         </div>
       </div>`;
     $(".user-ticket-wrapper").html(str);
@@ -169,6 +170,11 @@ let initialize = ()=>{
   })
 
   socket.on('newNumber', (data)=>{
+    // Activate the claim prize button only if the game has started
+    if(data.numbersPicked && data.numbersPicked.length){
+      $(".claim-btn").attr("disabled", false);
+    }
+
     $("#picked").trigger("play");
     let num = data.newNum;
     $(".done").removeClass("last");
@@ -201,6 +207,11 @@ let initialize = ()=>{
     let newUser = data.newUser;
     let userList = data.users;
     console.log(data);
+    // Activate the claim prize button only if the game was already started/in progress
+    if(data.numbersPicked && data.numbersPicked.length){
+      $(".claim-btn").attr("disabled", false);
+    }
+
     $(".notification").html(`<span class="notification-text">${newUser} joined </span>`).removeClass("hide");
     playersMethod.generateList(userList);
     if(data.role === 'admin'){
@@ -245,12 +256,17 @@ let initialize = ()=>{
       </p>
       <h5>Ticket: </h5>
       <table class="table table-bordered">`;
-      for(let t=0; t<data.ticket.length; t++) {
-        str +=`<tr>`
-        for(let n=0; n<data.ticket[t].length;n++) {
-          str += `<td> ${data.ticket[t][n] || ''} </td>`
+      if(data.ticket) {
+        for(let t=0; t<data.ticket.length; t++) {
+          str +=`<tr>`
+          for(let n=0; n<data.ticket[t].length;n++) {
+            str += `<td> ${data.ticket[t][n] || ''} </td>`
+          }
+          str +=`</tr>`
         }
-        str +=`</tr>`
+      }
+      else{
+        str += `<tr><td>Ticket Unavailable</td></tr>`;
       }
       str += `</table>
     </li>`;

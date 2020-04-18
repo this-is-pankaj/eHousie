@@ -89,7 +89,7 @@ methods.generateTicket = (numList) => {
           console.log(`Error Occurr ed when genenrating ticket ${err}`);
         })
     }
-    console.log(ticket);
+    // console.log(ticket);
     function pickValidNumbers(list, suggestedCol) {
       return new Promise((resolve, reject)=>{
         // Pick 5 numbers for the row of the ticket. The numbers should be valid.
