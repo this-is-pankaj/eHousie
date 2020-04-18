@@ -1,16 +1,22 @@
 const methods = {};
 const appStatic = require('./config/app.constant');
 const numConfig = appStatic.numConfig;
+const LOG = require('../utils').logger;
+const component = 'generateTicket';
 
 methods.generateNum = (min, max, count)=>{
   return new Promise((resolve, reject)=>{
-    let arr=[];
-    // console.log(`Generating Rand for ${min} ${max} ${count}`)
-    for(let i=0;i<count;i++){
-      let n= Math.floor((Math.random()*(max-min+1))+min);
-      arr.push(n);
+    try{
+      let arr=[];
+      for(let i=0;i<count;i++){
+        let n= Math.floor((Math.random()*(max-min+1))+min);
+        arr.push(n);
+      }
+      resolve(arr);
     }
-    resolve(arr);
+    catch(exc){
+      reject(exc);
+    }
   })
 };
 
@@ -45,10 +51,9 @@ methods.generateTicket = (numList) => {
           missedCols.push(i);
         }
       }
-      // console.log(`Columns pushed ${columnsPushed}The 2 rows missed the ${missedCols} columns`)
       await pickValidNumbers(ticket[2], missedCols)
         .catch((err)=>{
-          console.log(`Error Occurred when genenrating ticket ${err}`);
+          LOG.error(`${component}.generateTicket.pickValidNumbers`,null,`Error Occurred when genenrating ticket ${err}`);
         })
     }
     console.log(ticket);

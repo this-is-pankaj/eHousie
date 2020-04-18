@@ -1,18 +1,31 @@
-const appStatics = require('../config/app.constant');
+const prizes = require('../config/prizes.constant');
 const LOG = require('../utils').logger;
 const component = 'prize';
 
 let methods = {
-  prizeList: appStatics.prizes,
+  prizeList: prizes,
   getPrizeDisplayList(){
-    let prizes = []
+    let prizeList = []
     for(let prize in this.prizeList) {
-      prizes.push({
+      prizeList.push({
         type: prize,
         text: this.prizeList[prize].displayText
       });
     }
-    return prizes;
+    return prizeList;
+  },
+  getActivePrizeList() {
+    let activePrizes = [];
+    for(let prize in this.prizeList) {
+      // Get only active prize list
+      if(this.prizeList.isActive) {
+        activePrizes.push({
+          type: prize,
+          text: this.prizeList[prize].displayText
+        });
+      }
+    }
+    return activePrizes;
   },
   winnersList(){
     return new Promise((resolve, reject)=>{
@@ -46,6 +59,13 @@ let methods = {
       }
     })
   },
+  resetPrizes(){
+    // Reset All the prize in the game.
+    for(let prize in this.prizeList){
+      this.prizeList[prize].isActive = true;
+      this.prizeList[prize].claimedBy = [];
+    }
+  }
 }
 
 module.exports = methods;
