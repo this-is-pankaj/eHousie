@@ -12,6 +12,7 @@ const prizes = require('./server/config/prizes.constant');
 let numbersPicked = [];
 let users = {};
 app.use(express.static(`${__dirname}/public`));
+let kickedUsers = [];
 
 function generateUserNameList() {
   let list = [];
@@ -38,6 +39,14 @@ io.on('connection', function(socket){
   
   socket.on('userJoined', async function(userinfo){
     userinfo.isActive = true;
+    try{
+      if(kickedUsers.indexOf(userinfo.phone)>-1) {
+        socket.disconnect();
+      }
+    }
+    catch(exc){
+      console.log(`Exception when validating user kicked ${exc}`)
+    }
     // Check if user is admin
     if(userinfo.email===admin.email) {
       userinfo.role='admin';
@@ -92,12 +101,23 @@ io.on('connection', function(socket){
   })
 
   socket.on('numberPicked', function(msg){
-    console.log('Number Picked: ' + msg);
-    numbersPicked.push(msg);
-    io.emit('newNumber', {
-      newNum: msg, 
-      numbersPicked
-    });
+    console.log(`Number Picked: ${msg} by ${socket.user.username}`);
+    if(socket.user.email === admin.email || socket.id === admin.id) {
+      numbersPicked.push(msg);
+      io.emit('newNumber', {
+        newNum: msg, 
+        numbersPicked
+      });
+    }
+    else {
+      try{
+        socket.emit('boogie', {spoiler: true});
+        kickedUsers.push(socket.user.phone);
+      }
+      catch(exc){
+        console.log(`Exception when kicking user ouit: ${exc}`)
+      }
+    }
   });
 
   socket.on('resetGame', function(msg){
@@ -114,6 +134,7 @@ io.on('connection', function(socket){
       if(!users[socket.user.phone].isBoogie){
         let claimList = prizes[info.type].claimedBy;
         if(prizes[info.type].isActive) {
+          console.log(`prize claimed by ${socket.user.username}`)
           if(socket.user){
             prizes[info.type].isActive = false;
             prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
@@ -145,9 +166,9 @@ io.on('connection', function(socket){
               type: info.type,
               text: prizes[info.type].displayText
             },
-            claimedBy: claimList[claimList.length-1].user.username
+            claimedBy: 'Someone'
           });
-          prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
+          // prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
         }
       }
       else{
@@ -227,15 +248,16 @@ io.on('connection', function(socket){
   })
 
   // when the user disconnects.. perform this
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
     try{
-      console.log(`${socket.user.username} left`);
+      console.log(`${socket.user.username} left because of ${reason}`);
       users[socket.user.phone].isActive = false;
       // echo globally that this client has left
       socket.broadcast.emit('userLeft', {
         users: generateUserNameList(),
         userLeft: socket.user.username
       });
+      socket.emit('youLeft');
     }
     catch(exc){
 
