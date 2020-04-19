@@ -56,7 +56,7 @@ methods.generateTicket = (numList) => {
           LOG.error(`${component}.generateTicket.pickValidNumbers`,null,`Error Occurred when genenrating ticket ${err}`);
         })
     }
-    console.log(ticket);
+    // console.log(ticket);
     function pickValidNumbers(list, suggestedCol) {
       return new Promise((resolve, reject)=>{
         // Pick 5 numbers for the row of the ticket. The numbers should be valid.

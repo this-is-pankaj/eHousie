@@ -60,7 +60,7 @@ io.on('connection', function(socket){
       users[userinfo.phone] = userinfo;
       socket.user = userinfo;
       
-      console.log(`${userinfo.username} Joined`);
+      console.log(`${userinfo.username} Joined as a ${userinfo.role} and ticket details: ${JSON.stringify(ticketNumbers)}`);
       socket.emit('your ticket', {
         ticket: ticketNumbers,
         users: generateUserNameList()
@@ -68,11 +68,11 @@ io.on('connection', function(socket){
       io.emit('userJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username,
-        role: userinfo.role
+        role: userinfo.role,
+        numbersPicked
       });
     }
     else {
-      console.log(`Else encounntered`);
       let ticketNumbers = await ticket.generateRandomTicket()
           .catch((err)=>{
             console.log(err);
@@ -80,6 +80,7 @@ io.on('connection', function(socket){
           })
       if(userinfo.email===admin.email) {
         userinfo.role='admin';
+        userinfo.ticket = ticketNumbers;
       }
       else {
         userinfo.ticket = ticketNumbers;
@@ -87,7 +88,7 @@ io.on('connection', function(socket){
       userinfo.id= socket.id;
       users[userinfo.phone] = userinfo;
       socket.user = userinfo;
-      console.log(`${userinfo.username} Joined`);
+      console.log(`${userinfo.username} Joined and ticket details: ${JSON.stringify(ticketNumbers)}`);
       socket.emit('your ticket', {
         ticket: ticketNumbers,
         users: generateUserNameList()
@@ -95,7 +96,8 @@ io.on('connection', function(socket){
       io.emit('userJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username,
-        role: userinfo.role
+        role: userinfo.role,
+        numbersPicked
       });
     } 
   })
@@ -121,11 +123,23 @@ io.on('connection', function(socket){
   });
 
   socket.on('resetGame', function(msg){
-    numbersPicked=[];
-    io.emit('ongoingGame', {
-      numbersPicked,
-      users: generateUserNameList()
-    });
+    console.log(`Board Reset by ${socket.user.username}`);
+    if(socket.user.email === admin.email || socket.id === admin.id) {
+      numbersPicked=[];
+      io.emit('ongoingGame', {
+        numbersPicked,
+        users: generateUserNameList()
+      });
+    }
+    else {
+      try{
+        socket.emit('boogie', {spoiler: true});
+        kickedUsers.push(socket.user.phone);
+      }
+      catch(exc){
+        console.log(`Exception when kicking user ouit: ${exc}`)
+      }
+    }
   });
 
   socket.on('claimPrize', (info)=>{
@@ -181,66 +195,91 @@ io.on('connection', function(socket){
   });
 
   socket.on('validation', (report)=>{
-    console.log(`Validation Report ${JSON.stringify(report)}`);
-    let userInfo = users[report.id] || {};   //Socket Id of the claimee
-    let prizeClaimed = report.prizeType;
-    // If a user was not boogied, push the prize.
-    // Else activate the prize again
-    if(!userInfo.isBoogie) {
-      let user = prizes[prizeClaimed].claimedBy.filter((user)=>{
-        if(userInfo.id === user.id){
-          user.isClaimValid = report.isClaimValid;
-          return user;
-        }
-      });
-      // If the user is inn the array, inform others on the valiidation result
-      // Else open the prize for others.
-      if(user && user.length) {
-        // boogie the user if the claim is wrong
-        if(!report.isClaimValid) {
-          userInfo.isBoogie = true;
-          prizes[prizeClaimed].isActive = true;
+    console.log(`Validation Result by ${socket.user.username}`);
+    if(socket.user.email === admin.email || socket.id === admin.id) {
+
+      console.log(`Validation Report ${JSON.stringify(report)}`);
+      let userInfo = users[report.id] || {};   //Socket Id of the claimee
+      let prizeClaimed = report.prizeType;
+      // If a user was not boogied, push the prize.
+      // Else activate the prize again
+      if(!userInfo.isBoogie) {
+        let user = prizes[prizeClaimed].claimedBy.filter((user)=>{
+          if(userInfo.id === user.id){
+            user.isClaimValid = report.isClaimValid;
+            return user;
+          }
+        });
+        // If the user is inn the array, inform others on the valiidation result
+        // Else open the prize for others.
+        if(user && user.length) {
+          // boogie the user if the claim is wrong
+          if(!report.isClaimValid) {
+            userInfo.isBoogie = true;
+            prizes[prizeClaimed].isActive = true;
+          }
+          else{
+            prizes[prizeClaimed].isActive = false;
+          }
+          io.emit('claimReviewed', {
+            isClaimValid: report.isClaimValid,
+            prize: {
+              type: prizeClaimed,
+              text: prizes[prizeClaimed].displayText
+            },
+            claimedBy: userInfo.username
+          })
+          // Send info to the claimee about his claim.
+          // io.to(user.id).emit('yourClaimResult', {
+            
+          // })
         }
         else{
-          prizes[prizeClaimed].isActive = false;
+          io.emit('claimReviewed', {
+            isClaimValid: false,
+            prize: {
+              type: prizeClaimed,
+              text: prize[prizeClaimed].displayText
+            },
+            claimedBy: userInfo.username
+          })
         }
-        io.emit('claimReviewed', {
-          isClaimValid: report.isClaimValid,
-          prize: {
-            type: prizeClaimed,
-            text: prizes[prizeClaimed].displayText
-          },
-          claimedBy: userInfo.username
-        })
-        // Send info to the claimee about his claim.
-        // io.to(user.id).emit('yourClaimResult', {
-          
-        // })
       }
       else{
-        io.emit('claimReviewed', {
-          isClaimValid: false,
-          prize: {
-            type: prizeClaimed,
-            text: prize[prizeClaimed].displayText
-          },
-          claimedBy: userInfo.username
-        })
+        prizes[prizeClaimed].isActive = true;
       }
+      console.log(`Prize status ${JSON.stringify(prizes[prizeClaimed])}`);
     }
     else{
-      prizes[prizeClaimed].isActive = true;
+      try{
+        socket.emit('boogie', {spoiler: true});
+        kickedUsers.push(socket.user.phone);
+      }
+      catch(exc){
+        console.log(`Exception when kicking user ouit: ${exc}`)
+      }
     }
-    console.log(`Prize status ${JSON.stringify(prizes[prizeClaimed])}`);
   });
 
   socket.on('gameOver', async ()=>{
-    // Show the users the screen with winners name and prizes
-    let winners = await winnersList()
-      .catch((err)=>{
-        return [];
-      })
-    io.emit('gameOver', winners);
+    console.log(`Game Over. Results Declared by ${socket.user.username}`);
+    if(socket.user.email === admin.email || socket.id === admin.id){
+      // Show the users the screen with winners name and prizes
+      let winners = await winnerStats()
+        .catch((err)=>{
+          return [];
+        })
+      io.emit('gameOver', winners);
+    }
+    else{
+      try{
+        socket.emit('boogie', {spoiler: true});
+        kickedUsers.push(socket.user.phone);
+      }
+      catch(exc){
+        console.log(`Exception when kicking user ouit: ${exc}`)
+      }
+    }
   })
 
   socket.on('continueGame', ()=>{

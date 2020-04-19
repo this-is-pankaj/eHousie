@@ -48,5 +48,10 @@ module.exports = {
     isActive: true,
     displayText: "Love @ first Call",
     claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
+  },
+  unluckyMe: {
+    isActive: true,
+    displayText: "Unlucky Me",
+    claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
   }
 };
