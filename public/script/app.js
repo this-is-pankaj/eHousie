@@ -52,6 +52,7 @@ let ticketMethods= {
         <div class="player-options">
           <h3 class="prize-title">Claim Prize</h3>
           <button class="btn btn-round claim-btn love-at-first-call" data-prize="loveAtFirstCall" disabled>Love @ 1<sup>st</sup> Call </button>
+          <button class="btn btn-round claim-btn third-line" data-prize="unluckyMe" disabled>Unlucky Me</button>
           <button class="btn btn-round claim-btn first-line" data-prize="firstLine" disabled>1<sup>st</sup> Line </button>
           <button class="btn btn-round claim-btn second-line" data-prize="secondLine" disabled>2<sup>nd</sup> Line </button>
           <button class="btn btn-round claim-btn third-line" data-prize="thirdLine" disabled>3<sup>rd</sup> Line </button>
@@ -60,7 +61,7 @@ let ticketMethods= {
           <button class="btn btn-round claim-btn pyramid" data-prize="pyramid" disabled>Pyramid</button>
           <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1" disabled>Full House (1<sup>st</sup>) </button>
           <button class="btn btn-round claim-btn full-house-2" data-prize="fullHouse2" disabled>Full House (2<sup>nd</sup>) </button>
-            <button class="btn btn-round claim-btn full-house-3" data-prize="fullHouse3" disabled>Full House (3<sup>rd</sup>) </button>
+          <button class="btn btn-round claim-btn full-house-3" data-prize="fullHouse3" disabled>Full House (3<sup>rd</sup>) </button>
         </div>
       </div>`;
     $(".user-ticket-wrapper").html(str);

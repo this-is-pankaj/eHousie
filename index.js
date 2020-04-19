@@ -109,6 +109,7 @@ io.on('connection', function(socket){
           })
       if(userinfo.email===admin.email) {
         userinfo.role='admin';
+        userinfo.ticket = ticketNumbers;
       }
       else {
         userinfo.ticket = ticketNumbers;
