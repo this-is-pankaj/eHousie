@@ -305,7 +305,7 @@ let initialize = ()=>{
       }
     }
     $(".claim-notification").removeClass("hide").find(".prize-body").addClass("game-over").html(str);
-    storageMethods.resetStorageValues(locConfig, ticketMatch);
+    // storageMethods.resetStorageValues(locConfig, ticketMatch);
   });
 
   socket.on('disconnect', ()=>{
