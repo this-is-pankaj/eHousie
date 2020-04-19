@@ -40,5 +40,10 @@ const _statics = {
         max: 90
       }
     ]
+  },
+  roles: {
+    admin: 'admin'
   }
 };
+
+module.exports = _statics;
