@@ -268,7 +268,7 @@ io.on('connection', function(socket){
             isClaimValid: false,
             prize: {
               type: prizeClaimed,
-              text: prize[prizeClaimed].displayText
+              text: prizes[prizeClaimed].displayText
             },
             claimedBy: userInfo.username
           })
