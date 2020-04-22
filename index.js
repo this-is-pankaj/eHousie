@@ -5,7 +5,7 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const ticket = require('./server/generateTicket');
 const admin = {
-  email: process.env.admin,
+  email: process.env.admin || 'admin',
   id: ''
 };
 const prizes = require('./server/config/prizes.constant');
@@ -13,6 +13,7 @@ let numbersPicked = [];
 let users = {};
 app.use(express.static(`${__dirname}/public`));
 let kickedUsers = [];
+let gameId = Date.now();
 
 function generateUserNameList() {
   let list = [];
@@ -62,7 +63,8 @@ io.on('connection', function(socket){
     io.emit('ongoingGame', {
       numbersPicked,
       users: generateUserNameList(),
-      lastPicked: numbersPicked[numbersPicked.length-1]
+      lastPicked: numbersPicked[numbersPicked.length-1],
+      gameId
     });
   // }
   
@@ -92,13 +94,15 @@ io.on('connection', function(socket){
       console.log(`${userinfo.username} Joined as a ${userinfo.role} and ticket details: ${JSON.stringify(ticketNumbers)}`);
       socket.emit('your ticket', {
         ticket: ticketNumbers,
-        users: generateUserNameList()
+        users: generateUserNameList(),
+        gameId
       });
       io.emit('userJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username,
         role: userinfo.role,
-        numbersPicked
+        numbersPicked,
+        gameId
       });
     }
     else {
@@ -120,13 +124,15 @@ io.on('connection', function(socket){
       console.log(`${userinfo.username} Joined and ticket details: ${JSON.stringify(ticketNumbers)}`);
       socket.emit('your ticket', {
         ticket: ticketNumbers,
-        users: generateUserNameList()
+        users: generateUserNameList(),
+        gameId
       });
       io.emit('userJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username,
         role: userinfo.role,
-        numbersPicked
+        numbersPicked,
+        gameId
       });
     } 
   })
@@ -137,12 +143,13 @@ io.on('connection', function(socket){
       numbersPicked.push(msg);
       io.emit('newNumber', {
         newNum: msg, 
-        numbersPicked
+        numbersPicked,
+        gameId
       });
     }
     else {
       try{
-        socket.emit('boogie', {spoiler: true});
+        socket.emit('boogie', {spoiler: true, gameId});
         kickedUsers.push(socket.user.phone);
       }
       catch(exc){
@@ -155,14 +162,16 @@ io.on('connection', function(socket){
     console.log(`Board Reset by ${socket.user.username}`);
     if(socket.user.email === admin.email || socket.id === admin.id) {
       numbersPicked=[];
+      gameId = Date.now();
       io.emit('ongoingGame', {
         numbersPicked,
-        users: generateUserNameList()
+        users: generateUserNameList(),
+        gameId
       });
     }
     else {
       try{
-        socket.emit('boogie', {spoiler: true});
+        socket.emit('boogie', {spoiler: true, gameId});
         kickedUsers.push(socket.user.phone);
       }
       catch(exc){
@@ -187,7 +196,8 @@ io.on('connection', function(socket){
                 type: info.type,
                 text: prizes[info.type].displayText
               },
-              claimedBy: socket.user.username
+              claimedBy: socket.user.username,
+              gameId
             });
 
             io.to(admin.id).emit('reviewClaim', {
@@ -199,7 +209,8 @@ io.on('connection', function(socket){
               claimedBy: {
                 id: socket.user.phone,
                 username: socket.user.username
-              }
+              },
+              gameId
             })
           }
         }
@@ -209,13 +220,16 @@ io.on('connection', function(socket){
               type: info.type,
               text: prizes[info.type].displayText
             },
-            claimedBy: 'Someone'
+            claimedBy: 'Someone',
+            gameId
           });
           // prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
         }
       }
       else{
-        socket.emit('boogie');
+        socket.emit('boogie', {
+          gameId
+        });
       }
     }
     catch(exc) {
@@ -256,7 +270,8 @@ io.on('connection', function(socket){
               type: prizeClaimed,
               text: prizes[prizeClaimed].displayText
             },
-            claimedBy: userInfo.username
+            claimedBy: userInfo.username,
+            gameId
           })
           // Send info to the claimee about his claim.
           // io.to(user.id).emit('yourClaimResult', {
@@ -270,7 +285,8 @@ io.on('connection', function(socket){
               type: prizeClaimed,
               text: prizes[prizeClaimed].displayText
             },
-            claimedBy: userInfo.username
+            claimedBy: userInfo.username,
+            gameId
           })
         }
       }
@@ -281,7 +297,7 @@ io.on('connection', function(socket){
     }
     else{
       try{
-        socket.emit('boogie', {spoiler: true});
+        socket.emit('boogie', {spoiler: true, gameId});
         kickedUsers.push(socket.user.phone);
       }
       catch(exc){
@@ -298,11 +314,11 @@ io.on('connection', function(socket){
         .catch((err)=>{
           return [];
         })
-      io.emit('gameOver', winners);
+      io.emit('gameOver', {winners, gameId});
     }
     else{
       try{
-        socket.emit('boogie', {spoiler: true});
+        socket.emit('boogie', {spoiler: true, gameId});
         kickedUsers.push(socket.user.phone);
       }
       catch(exc){
@@ -312,7 +328,7 @@ io.on('connection', function(socket){
   })
 
   socket.on('continueGame', ()=>{
-    io.emit('continueGame', {});
+    io.emit('continueGame', {gameId});
   })
 
   // when the user disconnects.. perform this
@@ -323,9 +339,10 @@ io.on('connection', function(socket){
       // echo globally that this client has left
       socket.broadcast.emit('userLeft', {
         users: generateUserNameList(),
-        userLeft: socket.user.username
+        userLeft: socket.user.username,
+        gameId
       });
-      socket.emit('youLeft');
+      socket.emit('youLeft', {gameId});
     }
     catch(exc){
 

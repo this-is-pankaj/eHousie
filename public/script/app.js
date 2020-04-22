@@ -1,4 +1,5 @@
 'use strict';
+let storageId = '';
 let boardMethods = {
   generatedNum: [],
   generateGameBoard() {
@@ -42,7 +43,7 @@ let ticketMethods= {
     for(let row=0; row<ticket.length; row++) {
       str += `<tr>`;
       for(let col=0; col<ticket[row].length; col++) {
-        str += `<td id=t${col} class="ticket-num"> ${ticket[row][col] || ''} </td>`;
+        str += `<td id=t${row}${col} class="ticket-num"> ${ticket[row][col] || ''} </td>`;
       }
       str += `</tr>`;
     }
@@ -66,16 +67,54 @@ let ticketMethods= {
       </div>`;
     $(".user-ticket-wrapper").html(str);
     this.bindTicketMethod(socket);
+    this.populateLastSelections();
   },
   bindTicketMethod(socket) {
     $(".ticket-num").off().on("click", function(){
       $(this).toggleClass("matched");
+      let numId = $(this).attr("id");
+      let numbers = JSON.parse(storageMethods.getStorage());
+      if($(this).hasClass("matched")) {
+        if(!numbers){
+          numbers=[];
+        }
+        numbers.push(numId);
+      }
+      else{
+        if(numbers) {
+          if(numbers.indexOf(numId)>-1)
+            numbers.splice(numbers.indexOf(numId), 1);
+        }
+      }
+
+      storageMethods.setStorage(numbers);
+
     });
 
     $(".claim-btn").off().on("click", function(){
       socket.emit("claimPrize", {type: $(this).data("prize")});
       $(this).attr("disabled", true);
-    })
+    });
+  },
+  populateLastSelections() {
+    let numbers = JSON.parse(storageMethods.getStorage());
+    if(numbers && numbers.length) {
+      for(let i=0; i<numbers.length; i++){
+        $(`#${numbers[i]}`).addClass("matched");
+      }
+    }
+  }
+}
+
+let storageMethods = {
+  getStorage: function(){
+    return localStorage.getItem(storageId);
+  },
+  setStorage: function(val){
+    localStorage.setItem(storageId, JSON.stringify(val));
+  },
+  deleteStorage: function() {
+    localStorage.removeItem(storageId);
   }
 }
 
@@ -232,6 +271,7 @@ let initialize = ()=>{
 
   socket.on('your ticket', (data)=>{
     if(data.ticket && data.ticket.length){
+      storageId = data.gameId;
       ticketMethods.generateTicket(socket, data.ticket);
     }
   });
@@ -295,8 +335,9 @@ let initialize = ()=>{
     }
   });
 
-  socket.on('gameOver', (winners)=>{
-    console.log(winners);
+  socket.on('gameOver', (data)=>{
+    console.log(data);
+    let winners = data.winners;
     let str=`<h2 class="text-center">Game Over</h2>`;
     if(winners.length){
       str = `<h2 class="text-cennter"> Winners </h2>`;
@@ -305,6 +346,7 @@ let initialize = ()=>{
       }
     }
     $(".claim-notification").removeClass("hide").find(".prize-body").addClass("game-over").html(str);
+    storageMethods.deleteStorage();
     // storageMethods.resetStorageValues(locConfig, ticketMatch);
   });
 
