@@ -185,7 +185,7 @@ io.on('connection', function(socket){
       // Check if the user is not boogied
       if(!users[socket.user.phone].isBoogie){
         //  if a user  is active, allow claim, else ask him to reload
-        if(!users[socket.user.phone].isActive) {
+        if(users[socket.user.phone].isActive) {
           let claimList = prizes[info.type].claimedBy;
           if(prizes[info.type].isActive) {
             console.log(`prize claimed by ${socket.user.username}`)
