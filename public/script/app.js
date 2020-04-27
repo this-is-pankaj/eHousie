@@ -318,10 +318,12 @@ let initialize = ()=>{
   socket.on('claimReviewed', (data)=>{
     console.log(data);
     if(data.isClaimValid) {
+      $("#win").trigger("play");
       $(".claim-notification").removeClass("hide").find(".prize-body").append(`<p class="prize-text">${data.claimedBy} has claimed for ${data.prize.text} and WON!</p>`);
       $(`[data-prize=${data.prize.type}]`).addClass("hide");
     }
     else{
+      $("#boo").trigger("play");
       $(".claim-notification").removeClass("hide").find(".prize-body").append(`<p class="prize-text">${data.claimedBy} has claimed for ${data.prize.text} and has been BBOOGIEEEDD!</p>`);
       $(`[data-prize=${data.prize.type}]`).removeClass("hide");
     }
@@ -337,6 +339,7 @@ let initialize = ()=>{
 
   socket.on('gameOver', (data)=>{
     console.log(data);
+    $("#win").trigger("play");
     let winners = data.winners;
     let str=`<h2 class="text-center">Game Over</h2>`;
     if(winners.length){
