@@ -184,46 +184,52 @@ io.on('connection', function(socket){
     try{
       // Check if the user is not boogied
       if(!users[socket.user.phone].isBoogie){
-        let claimList = prizes[info.type].claimedBy;
-        if(prizes[info.type].isActive) {
-          console.log(`prize claimed by ${socket.user.username}`)
-          if(socket.user){
-            prizes[info.type].isActive = false;
-            prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
-            // Inform all users about the claim
-            io.emit('prizeClaim', {
+        //  if a user  is active, allow claim, else ask him to reload
+        if(!users[socket.user.phone].isActive) {
+          let claimList = prizes[info.type].claimedBy;
+          if(prizes[info.type].isActive) {
+            console.log(`prize claimed by ${socket.user.username}`)
+            if(socket.user){
+              prizes[info.type].isActive = false;
+              prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
+              // Inform all users about the claim
+              io.emit('prizeClaim', {
+                prize: {
+                  type: info.type,
+                  text: prizes[info.type].displayText
+                },
+                claimedBy: socket.user.username,
+                gameId
+              });
+
+              io.to(admin.id).emit('reviewClaim', {
+                prize: {
+                  type: info.type,
+                  text: prizes[info.type].displayText
+                },
+                ticket: users[socket.user.phone].ticket,
+                claimedBy: {
+                  id: socket.user.phone,
+                  username: socket.user.username
+                },
+                gameId
+              })
+            }
+          }
+          else {
+            socket.emit('alreadyClaimed', {
               prize: {
                 type: info.type,
                 text: prizes[info.type].displayText
               },
-              claimedBy: socket.user.username,
+              claimedBy: 'Someone',
               gameId
             });
-
-            io.to(admin.id).emit('reviewClaim', {
-              prize: {
-                type: info.type,
-                text: prizes[info.type].displayText
-              },
-              ticket: users[socket.user.phone].ticket,
-              claimedBy: {
-                id: socket.user.phone,
-                username: socket.user.username
-              },
-              gameId
-            })
+            // prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
           }
         }
-        else {
-          socket.emit('alreadyClaimed', {
-            prize: {
-              type: info.type,
-              text: prizes[info.type].displayText
-            },
-            claimedBy: 'Someone',
-            gameId
-          });
-          // prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
+        else{
+          socket.emit('youLeft', {gameId});
         }
       }
       else{
