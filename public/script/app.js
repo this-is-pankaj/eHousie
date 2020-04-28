@@ -50,24 +50,21 @@ let ticketMethods= {
     str += `</table>
       <div class="content-section">
         <h1 class="new-num text-center">And the number is...</h1>
-        <div class="player-options">
-          <h3 class="prize-title">Claim Prize</h3>
-          <button class="btn btn-round claim-btn love-at-first-call" data-prize="loveAtFirstCall" disabled>Love @ 1<sup>st</sup> Call </button>
-          <button class="btn btn-round claim-btn third-line" data-prize="unluckyMe" disabled>Unlucky Me</button>
-          <button class="btn btn-round claim-btn first-line" data-prize="firstLine" disabled>1<sup>st</sup> Line </button>
-          <button class="btn btn-round claim-btn second-line" data-prize="secondLine" disabled>2<sup>nd</sup> Line </button>
-          <button class="btn btn-round claim-btn third-line" data-prize="thirdLine" disabled>3<sup>rd</sup> Line </button>
-          <button class="btn btn-round claim-btn third-line" data-prize="early7" disabled>Early 7</button>
-          <button class="btn btn-round claim-btn third-line" data-prize="corners" disabled>6 Corners</button>
-          <button class="btn btn-round claim-btn pyramid" data-prize="pyramid" disabled>Pyramid</button>
-          <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1" disabled>Full House (1<sup>st</sup>) </button>
-          <button class="btn btn-round claim-btn full-house-2" data-prize="fullHouse2" disabled>Full House (2<sup>nd</sup>) </button>
-          <button class="btn btn-round claim-btn full-house-3" data-prize="fullHouse3" disabled>Full House (3<sup>rd</sup>) </button>
-        </div>
+        <div class="player-options"></div>
       </div>`;
     $(".user-ticket-wrapper").html(str);
     this.bindTicketMethod(socket);
     this.populateLastSelections();
+  },
+  generatePrizeList(prizeList, socket) {
+    let str = `<h3 class="prize-title">Claim Prize</h3>`;
+
+    for(let i=0; i< prizeList.length; i++){
+      str += `<button class="btn btn-round claim-btn" data-prize=${prizeList[i].type} disabled>${prizeList[i].text} <br/> <small>(${prizeList[i].amount}) </small></button>`;
+    }
+
+    $(".user-ticket-wrapper").find(".player-options").html(str);
+    this.bindPrizeMethod(socket);
   },
   bindTicketMethod(socket) {
     $(".ticket-num").off().on("click", function(){
@@ -90,7 +87,8 @@ let ticketMethods= {
       storageMethods.setStorage(numbers);
 
     });
-
+  },
+  bindPrizeMethod(socket){
     $(".claim-btn").off().on("click", function(){
       socket.emit("claimPrize", {type: $(this).data("prize")});
       $(this).attr("disabled", true);
@@ -275,6 +273,15 @@ let initialize = ()=>{
       ticketMethods.generateTicket(socket, data.ticket);
     }
   });
+
+  socket.on('generatePrize', (info)=>{
+    let prizeList = info.prizeList;
+    ticketMethods.generatePrizeList(prizeList, socket);
+    // Activate the claim prize button only if the game was already started/in progress
+    if(info.numbersPicked && info.numbersPicked.length){
+      $(".claim-btn").attr("disabled", false);
+    }
+  })
 
   socket.on('prizeClaim', (data)=>{
     clearNotification();

@@ -29,6 +29,20 @@ function generateUserNameList() {
   return list;
 }
 
+function getActivePrizes()  {
+  let list =  [];
+  for(let type in prizes) {
+    if(prizes[type].isActive){
+      list.push({
+        type,
+        text:prizes[type].displayText,
+        amount: prizes[type].amount
+      });
+    }
+  }
+  return list;
+}
+
 function winnerStats() {
   return new Promise((resolve, reject)=>{
     try {
@@ -83,6 +97,7 @@ io.on('connection', function(socket){
       userinfo.role='admin';
       admin.id = socket.id;
     }
+
     console.log(`All users ${JSON.stringify(users)}`);
     if(users[userinfo.phone]) {
       let ticketNumbers = users[userinfo.phone].ticket;
@@ -135,6 +150,11 @@ io.on('connection', function(socket){
         gameId
       });
     } 
+    socket.emit('generatePrize', {
+      gameId,
+      prizeList: getActivePrizes(),
+      numbersPicked
+    })
   })
 
   socket.on('numberPicked', function(msg){
@@ -279,6 +299,13 @@ io.on('connection', function(socket){
             claimedBy: userInfo.username,
             gameId
           })
+
+          io.emit('generatePrize', {
+            gameId,
+            prizeList: getActivePrizes(),
+            numbersPicked
+          })
+          
           // Send info to the claimee about his claim.
           // io.to(user.id).emit('yourClaimResult', {
             
