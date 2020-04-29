@@ -1,12 +1,12 @@
 module.exports = {
   loveAtFirstCall: {
-    isActive: true,
+    isActive: false,
     displayText: "Love @ first Call",
     amount: "Rs30",
     claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
   },
   unluckyMe: {
-    isActive: true,
+    isActive: false,
     displayText: "Unlucky Me",
     amount: "Rs30",
     claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
@@ -24,7 +24,7 @@ module.exports = {
     claimedBy: []
   },
   pyramid: {
-    isActive: true,
+    isActive: false,
     displayText: "Pyramid",
     amount: "Rs40",
     claimedBy: []
@@ -54,13 +54,13 @@ module.exports = {
     claimedBy: []
   },
   fullHouse2: {
-    isActive: true,
+    isActive: false,
     displayText: "2nd Full House",
     amount: "Rs60",
     claimedBy: []
   },
   fullHouse3: {
-    isActive: true,
+    isActive: false,
     displayText: "3rd Full House",
     amount: "Rs50",
     claimedBy: []
