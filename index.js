@@ -270,6 +270,8 @@ io.on('connection', function(socket){
       console.log(`Validation Report ${JSON.stringify(report)}`);
       let userInfo = users[report.id] || {};   //Socket Id of the claimee
       let prizeClaimed = report.prizeType;
+
+      console.log(`User Detected ${JSON.stringify(userInfo)}`);
       // If a user was not boogied, push the prize.
       // Else activate the prize again
       if(!userInfo.isBoogie) {
@@ -279,6 +281,8 @@ io.on('connection', function(socket){
             return user;
           }
         });
+
+        console.log(`User ID Verified ${JSON.stringify(user)}`);
         // If the user is inn the array, inform others on the valiidation result
         // Else open the prize for others.
         if(user && user.length) {
