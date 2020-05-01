@@ -1,36 +1,19 @@
 'use strict';
 let storageId = '';
 let boardMethods = {
-  generatedNum: [],
   generateGameBoard() {
-    this.generatedNum.length = 0;
     let str ='<table class="table table-bordered">';
     for(let i=1; i<=90; i++){
       if(i%10 === 1){
         str += `</tr><tr>`
       }
       str += `<td id=b${i} class="board-num"> ${i} </td>`;
-      this.generatedNum.push(i);
     }
     str += `</tr></table>
       <div class="content-section">
         <h1 class="new-num text-center">And the number is...</h1>
       </div>`;
     $(".game-board").html(str);
-  },
-  generateBoardNumber() {
-    return new Promise((resolve, reject) => {
-      function generator(max) {
-        let num = Math.floor(Math.random()*(max));
-        return num;
-      }
-      
-      let num = generator(this.generatedNum.length);
-
-      let selectedNum = this.generatedNum[num];
-      this.generatedNum.splice(num, 1);
-      resolve(selectedNum);
-    })
   },
   enableAdminConsole() {
     $(".board-manager").removeClass("hide");
@@ -183,8 +166,7 @@ let initialize = ()=>{
   })
 
   $(".generate-number").off().on("click", async ()=>{
-    let num = await boardMethods.generateBoardNumber();
-    socket.emit('numberPicked', num);
+    socket.emit('numberPicked');
   });
 
   $(".reset-game").off().on("click", ()=>{

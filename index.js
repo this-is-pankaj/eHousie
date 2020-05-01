@@ -4,6 +4,7 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const ticket = require('./server/generateTicket');
+const board = require('./server/components/board.component');
 const admin = {
   email: process.env.admin || 'admin',
   id: ''
@@ -14,6 +15,8 @@ let users = {};
 app.use(express.static(`${__dirname}/public`));
 let kickedUsers = [];
 let gameId = Date.now();
+// Innitialize the game
+board.initializeGameBoard();
 
 function generateUserNameList() {
   let list = [];
@@ -157,15 +160,23 @@ io.on('connection', function(socket){
     })
   })
 
-  socket.on('numberPicked', function(msg){
-    console.log(`Number Picked: ${msg} by ${socket.user.username}`);
+  socket.on('numberPicked', async function(){
+    console.log(`Number Picked: by ${socket.user.username}`);
     if(socket.user.email === admin.email || socket.id === admin.id) {
-      numbersPicked.push(msg);
-      io.emit('newNumber', {
-        newNum: msg, 
-        numbersPicked,
-        gameId
-      });
+      let msg = await board.pickNumber()
+        .catch((err)=>{
+          console.log(`Error when picking number : ${err}`);
+          return false;
+        })
+      if(msg) {
+        numbersPicked.push(msg);
+        io.emit('newNumber', {
+          newNum: msg, 
+          numbersPicked,
+          gameId
+        });
+        console.log(`Number Picked: ${msg}`);
+      }
     }
     else {
       try{
@@ -183,6 +194,7 @@ io.on('connection', function(socket){
     if(socket.user.email === admin.email || socket.id === admin.id) {
       numbersPicked=[];
       gameId = Date.now();
+      board.initializeGameBoard();
       io.emit('ongoingGame', {
         numbersPicked,
         users: generateUserNameList(),
