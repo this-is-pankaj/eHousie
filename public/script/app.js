@@ -227,6 +227,11 @@ let initialize = ()=>{
       email: $(".user-form").find("[name='email']").val().trim()
     };
     
+    if(info.phone.length!==10 || parseInt(info.phone)===NaN){
+      alert(`Enter a valid phone Number`);
+      return false;
+    }
+
     for(let k in info) {
       if(!info[k].length) {
         alert(`Invalid Value for ${k}`);
