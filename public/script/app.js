@@ -1,35 +1,19 @@
 'use strict';
+let storageId = '';
 let boardMethods = {
-  generatedNum: [],
   generateGameBoard() {
-    this.generatedNum.length = 0;
     let str ='<table class="table table-bordered">';
     for(let i=1; i<=90; i++){
       if(i%10 === 1){
         str += `</tr><tr>`
       }
       str += `<td id=b${i} class="board-num"> ${i} </td>`;
-      this.generatedNum.push(i);
     }
     str += `</tr></table>
       <div class="content-section">
         <h1 class="new-num text-center">And the number is...</h1>
       </div>`;
     $(".game-board").html(str);
-  },
-  generateBoardNumber() {
-    return new Promise((resolve, reject) => {
-      function generator(max) {
-        let num = Math.floor(Math.random()*(max));
-        return num;
-      }
-      
-      let num = generator(this.generatedNum.length);
-
-      let selectedNum = this.generatedNum[num];
-      this.generatedNum.splice(num, 1);
-      resolve(selectedNum);
-    })
   },
   enableAdminConsole() {
     $(".board-manager").removeClass("hide");
@@ -42,38 +26,76 @@ let ticketMethods= {
     for(let row=0; row<ticket.length; row++) {
       str += `<tr>`;
       for(let col=0; col<ticket[row].length; col++) {
-        str += `<td id=t${col} class="ticket-num"> ${ticket[row][col] || ''} </td>`;
+        str += `<td id=t${row}${col} class="ticket-num"> ${ticket[row][col] || ''} </td>`;
       }
       str += `</tr>`;
     }
     str += `</table>
       <div class="content-section">
         <h1 class="new-num text-center">And the number is...</h1>
-        <div class="player-options">
-          <h3 class="prize-title">Claim Prize</h3>
-          <button class="btn btn-round claim-btn love-at-first-call" data-prize="loveAtFirstCall" disabled>Love @ 1<sup>st</sup> Call </button>
-          <button class="btn btn-round claim-btn third-line" data-prize="unluckyMe" disabled>Unlucky Me</button>
-          <button class="btn btn-round claim-btn first-line" data-prize="firstLine" disabled>1<sup>st</sup> Line </button>
-          <button class="btn btn-round claim-btn second-line" data-prize="secondLine" disabled>2<sup>nd</sup> Line </button>
-          <button class="btn btn-round claim-btn third-line" data-prize="thirdLine" disabled>3<sup>rd</sup> Line </button>
-          <button class="btn btn-round claim-btn third-line" data-prize="early7" disabled>Early 7</button>
-          <button class="btn btn-round claim-btn third-line" data-prize="corners" disabled>6 Corners</button>
-          <button class="btn btn-round claim-btn pyramid" data-prize="pyramid" disabled>Pyramid</button>
-          <button class="btn btn-round claim-btn full-house-1" data-prize="fullHouse1" disabled>Full House (1<sup>st</sup>) </button>
-        </div>
+        <div class="player-options"></div>
       </div>`;
     $(".user-ticket-wrapper").html(str);
     this.bindTicketMethod(socket);
+    this.populateLastSelections();
+  },
+  generatePrizeList(prizeList, socket) {
+    let str = `<h3 class="prize-title">Claim Prize</h3>`;
+
+    for(let i=0; i< prizeList.length; i++){
+      str += `<button class="btn btn-round claim-btn" data-prize=${prizeList[i].type} disabled>${prizeList[i].text} <br/> <small>(${prizeList[i].amount}) </small></button>`;
+    }
+
+    $(".user-ticket-wrapper").find(".player-options").html(str);
+    this.bindPrizeMethod(socket);
   },
   bindTicketMethod(socket) {
     $(".ticket-num").off().on("click", function(){
       $(this).toggleClass("matched");
-    });
+      let numId = $(this).attr("id");
+      let numbers = JSON.parse(storageMethods.getStorage());
+      if($(this).hasClass("matched")) {
+        if(!numbers){
+          numbers=[];
+        }
+        numbers.push(numId);
+      }
+      else{
+        if(numbers) {
+          if(numbers.indexOf(numId)>-1)
+            numbers.splice(numbers.indexOf(numId), 1);
+        }
+      }
 
+      storageMethods.setStorage(numbers);
+
+    });
+  },
+  bindPrizeMethod(socket){
     $(".claim-btn").off().on("click", function(){
       socket.emit("claimPrize", {type: $(this).data("prize")});
       $(this).attr("disabled", true);
-    })
+    });
+  },
+  populateLastSelections() {
+    let numbers = JSON.parse(storageMethods.getStorage());
+    if(numbers && numbers.length) {
+      for(let i=0; i<numbers.length; i++){
+        $(`#${numbers[i]}`).addClass("matched");
+      }
+    }
+  }
+}
+
+let storageMethods = {
+  getStorage: function(){
+    return localStorage.getItem(storageId);
+  },
+  setStorage: function(val){
+    localStorage.setItem(storageId, JSON.stringify(val));
+  },
+  deleteStorage: function() {
+    localStorage.removeItem(storageId);
   }
 }
 
@@ -144,8 +166,7 @@ let initialize = ()=>{
   })
 
   $(".generate-number").off().on("click", async ()=>{
-    let num = await boardMethods.generateBoardNumber();
-    socket.emit('numberPicked', num);
+    socket.emit('numberPicked');
   });
 
   $(".reset-game").off().on("click", ()=>{
@@ -188,6 +209,11 @@ let initialize = ()=>{
       email: $(".user-form").find("[name='email']").val().trim()
     };
     
+    if(info.phone.length!==10 || parseInt(info.phone)===NaN){
+      alert(`Enter a valid phone Number`);
+      return false;
+    }
+
     for(let k in info) {
       if(!info[k].length) {
         alert(`Invalid Value for ${k}`);
@@ -230,9 +256,19 @@ let initialize = ()=>{
 
   socket.on('your ticket', (data)=>{
     if(data.ticket && data.ticket.length){
+      storageId = data.gameId;
       ticketMethods.generateTicket(socket, data.ticket);
     }
   });
+
+  socket.on('generatePrize', (info)=>{
+    let prizeList = info.prizeList;
+    ticketMethods.generatePrizeList(prizeList, socket);
+    // Activate the claim prize button only if the game was already started/in progress
+    if(info.numbersPicked && info.numbersPicked.length){
+      $(".claim-btn").attr("disabled", false);
+    }
+  })
 
   socket.on('prizeClaim', (data)=>{
     clearNotification();
@@ -276,10 +312,12 @@ let initialize = ()=>{
   socket.on('claimReviewed', (data)=>{
     console.log(data);
     if(data.isClaimValid) {
+      $("#win").trigger("play");
       $(".claim-notification").removeClass("hide").find(".prize-body").append(`<p class="prize-text">${data.claimedBy} has claimed for ${data.prize.text} and WON!</p>`);
       $(`[data-prize=${data.prize.type}]`).addClass("hide");
     }
     else{
+      $("#boo").trigger("play");
       $(".claim-notification").removeClass("hide").find(".prize-body").append(`<p class="prize-text">${data.claimedBy} has claimed for ${data.prize.text} and has been BBOOGIEEEDD!</p>`);
       $(`[data-prize=${data.prize.type}]`).removeClass("hide");
     }
@@ -293,8 +331,10 @@ let initialize = ()=>{
     }
   });
 
-  socket.on('gameOver', (winners)=>{
-    console.log(winners);
+  socket.on('gameOver', (data)=>{
+    console.log(data);
+    $("#win").trigger("play");
+    let winners = data.winners;
     let str=`<h2 class="text-center">Game Over</h2>`;
     if(winners.length){
       str = `<h2 class="text-cennter"> Winners </h2>`;
@@ -303,6 +343,7 @@ let initialize = ()=>{
       }
     }
     $(".claim-notification").removeClass("hide").find(".prize-body").addClass("game-over").html(str);
+    storageMethods.deleteStorage();
     // storageMethods.resetStorageValues(locConfig, ticketMatch);
   });
 

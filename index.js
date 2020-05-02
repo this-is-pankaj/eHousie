@@ -4,15 +4,19 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const ticket = require('./server/components/generateTicket');
+const board = require('./server/components/board.component');
 const admin = {
-  email: process.env.admin,
-  id: ''  //Socket ID of the user
+  email: process.env.admin || 'admin',
+  id: ''
 };
 const prizes = require('./server/config/prizes.constant');
 let numbersPicked = [];
 let users = {};
 app.use(express.static(`${__dirname}/public`));
 let kickedUsers = [];
+let gameId = Date.now();
+// Innitialize the game
+board.initializeGameBoard();
 
 function generateUserNameList() {
   let list = [];
@@ -33,7 +37,8 @@ io.on('connection', function(socket){
     io.emit('ongoingGame', {
       numbersPicked,
       users: generateUserNameList(),
-      lastPicked: numbersPicked[numbersPicked.length-1]
+      lastPicked: numbersPicked[numbersPicked.length-1],
+      gameId
     });
   // }
   
@@ -52,6 +57,7 @@ io.on('connection', function(socket){
       userinfo.role='admin';
       admin.id = socket.id;
     }
+
     console.log(`All users ${JSON.stringify(users)}`);
     if(users[userinfo.phone]) {
       let ticketNumbers = users[userinfo.phone].ticket;
@@ -63,13 +69,15 @@ io.on('connection', function(socket){
       console.log(`${userinfo.username} Joined as a ${userinfo.role} and ticket details: ${JSON.stringify(ticketNumbers)}`);
       socket.emit('your ticket', {
         ticket: ticketNumbers,
-        users: generateUserNameList()
+        users: generateUserNameList(),
+        gameId
       });
       io.emit('userJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username,
         role: userinfo.role,
-        numbersPicked
+        numbersPicked,
+        gameId
       });
     }
     else {
@@ -91,29 +99,45 @@ io.on('connection', function(socket){
       console.log(`${userinfo.username} Joined and ticket details: ${JSON.stringify(ticketNumbers)}`);
       socket.emit('your ticket', {
         ticket: ticketNumbers,
-        users: generateUserNameList()
+        users: generateUserNameList(),
+        gameId
       });
       io.emit('userJoined', {
         users: generateUserNameList(), 
         newUser: userinfo.username,
         role: userinfo.role,
-        numbersPicked
+        numbersPicked,
+        gameId
       });
     } 
+    socket.emit('generatePrize', {
+      gameId,
+      prizeList: getActivePrizes(),
+      numbersPicked
+    })
   })
 
-  socket.on('numberPicked', function(msg){
-    console.log(`Number Picked: ${msg} by ${socket.user.username}`);
+  socket.on('numberPicked', async function(){
+    console.log(`Number Picked: by ${socket.user.username}`);
     if(socket.user.email === admin.email || socket.id === admin.id) {
-      numbersPicked.push(msg);
-      io.emit('newNumber', {
-        newNum: msg, 
-        numbersPicked
-      });
+      let msg = await board.pickNumber()
+        .catch((err)=>{
+          console.log(`Error when picking number : ${err}`);
+          return false;
+        })
+      if(msg) {
+        numbersPicked.push(msg);
+        io.emit('newNumber', {
+          newNum: msg, 
+          numbersPicked,
+          gameId
+        });
+        console.log(`Number Picked: ${msg}`);
+      }
     }
     else {
       try{
-        socket.emit('boogie', {spoiler: true});
+        socket.emit('boogie', {spoiler: true, gameId});
         kickedUsers.push(socket.user.phone);
       }
       catch(exc){
@@ -126,14 +150,17 @@ io.on('connection', function(socket){
     console.log(`Board Reset by ${socket.user.username}`);
     if(socket.user.email === admin.email || socket.id === admin.id) {
       numbersPicked=[];
+      gameId = Date.now();
+      board.initializeGameBoard();
       io.emit('ongoingGame', {
         numbersPicked,
-        users: generateUserNameList()
+        users: generateUserNameList(),
+        gameId
       });
     }
     else {
       try{
-        socket.emit('boogie', {spoiler: true});
+        socket.emit('boogie', {spoiler: true, gameId});
         kickedUsers.push(socket.user.phone);
       }
       catch(exc){
@@ -146,47 +173,58 @@ io.on('connection', function(socket){
     try{
       // Check if the user is not boogied
       if(!users[socket.user.phone].isBoogie){
-        let claimList = prizes[info.type].claimedBy;
-        if(prizes[info.type].isActive) {
-          console.log(`prize claimed by ${socket.user.username}`)
-          if(socket.user){
-            prizes[info.type].isActive = false;
-            prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
-            // Inform all users about the claim
-            io.emit('prizeClaim', {
-              prize: {
-                type: info.type,
-                text: prizes[info.type].displayText
-              },
-              claimedBy: socket.user.username
-            });
+        //  if a user  is active, allow claim, else ask him to reload
+        if(users[socket.user.phone].isActive) {
+          let claimList = prizes[info.type].claimedBy;
+          if(prizes[info.type].isActive) {
+            console.log(`prize claimed by ${socket.user.username}`)
+            if(socket.user){
+              prizes[info.type].isActive = false;
+              prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
+              // Inform all users about the claim
+              io.emit('prizeClaim', {
+                prize: {
+                  type: info.type,
+                  text: prizes[info.type].displayText
+                },
+                claimedBy: socket.user.username,
+                gameId
+              });
 
-            io.to(admin.id).emit('reviewClaim', {
+              io.to(admin.id).emit('reviewClaim', {
+                prize: {
+                  type: info.type,
+                  text: prizes[info.type].displayText
+                },
+                ticket: users[socket.user.phone].ticket,
+                claimedBy: {
+                  id: socket.user.phone,
+                  username: socket.user.username
+                },
+                gameId
+              })
+            }
+          }
+          else {
+            socket.emit('alreadyClaimed', {
               prize: {
                 type: info.type,
                 text: prizes[info.type].displayText
               },
-              ticket: users[socket.user.phone].ticket,
-              claimedBy: {
-                id: socket.user.phone,
-                username: socket.user.username
-              }
-            })
+              claimedBy: 'Someone',
+              gameId
+            });
+            // prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
           }
         }
-        else {
-          socket.emit('alreadyClaimed', {
-            prize: {
-              type: info.type,
-              text: prizes[info.type].displayText
-            },
-            claimedBy: 'Someone'
-          });
-          // prizes[info.type].claimedBy.push({user: socket.user , id: socket.id});
+        else{
+          socket.emit('youLeft', {gameId});
         }
       }
       else{
-        socket.emit('boogie');
+        socket.emit('boogie', {
+          gameId
+        });
       }
     }
     catch(exc) {
@@ -201,6 +239,8 @@ io.on('connection', function(socket){
       console.log(`Validation Report ${JSON.stringify(report)}`);
       let userInfo = users[report.id] || {};   //Socket Id of the claimee
       let prizeClaimed = report.prizeType;
+
+      console.log(`User Detected ${JSON.stringify(userInfo)}`);
       // If a user was not boogied, push the prize.
       // Else activate the prize again
       if(!userInfo.isBoogie) {
@@ -210,6 +250,8 @@ io.on('connection', function(socket){
             return user;
           }
         });
+
+        console.log(`User ID Verified ${JSON.stringify(user)}`);
         // If the user is inn the array, inform others on the valiidation result
         // Else open the prize for others.
         if(user && user.length) {
@@ -227,8 +269,16 @@ io.on('connection', function(socket){
               type: prizeClaimed,
               text: prizes[prizeClaimed].displayText
             },
-            claimedBy: userInfo.username
+            claimedBy: userInfo.username,
+            gameId
           })
+
+          io.emit('generatePrize', {
+            gameId,
+            prizeList: getActivePrizes(),
+            numbersPicked
+          })
+          
           // Send info to the claimee about his claim.
           // io.to(user.id).emit('yourClaimResult', {
             
@@ -239,9 +289,10 @@ io.on('connection', function(socket){
             isClaimValid: false,
             prize: {
               type: prizeClaimed,
-              text: prize[prizeClaimed].displayText
+              text: prizes[prizeClaimed].displayText
             },
-            claimedBy: userInfo.username
+            claimedBy: userInfo.username,
+            gameId
           })
         }
       }
@@ -252,7 +303,7 @@ io.on('connection', function(socket){
     }
     else{
       try{
-        socket.emit('boogie', {spoiler: true});
+        socket.emit('boogie', {spoiler: true, gameId});
         kickedUsers.push(socket.user.phone);
       }
       catch(exc){
@@ -269,11 +320,11 @@ io.on('connection', function(socket){
         .catch((err)=>{
           return [];
         })
-      io.emit('gameOver', winners);
+      io.emit('gameOver', {winners, gameId});
     }
     else{
       try{
-        socket.emit('boogie', {spoiler: true});
+        socket.emit('boogie', {spoiler: true, gameId});
         kickedUsers.push(socket.user.phone);
       }
       catch(exc){
@@ -283,7 +334,7 @@ io.on('connection', function(socket){
   })
 
   socket.on('continueGame', ()=>{
-    io.emit('continueGame', {});
+    io.emit('continueGame', {gameId});
   })
 
   // when the user disconnects.. perform this
@@ -294,9 +345,10 @@ io.on('connection', function(socket){
       // echo globally that this client has left
       socket.broadcast.emit('userLeft', {
         users: generateUserNameList(),
-        userLeft: socket.user.username
+        userLeft: socket.user.username,
+        gameId
       });
-      socket.emit('youLeft');
+      socket.emit('youLeft', {gameId});
     }
     catch(exc){
 
@@ -304,6 +356,6 @@ io.on('connection', function(socket){
   });
 });
 
-http.listen(3000, function(){
+http.listen(process.env.PORT || 3000, function(){
   console.log('listening on *:3000');
 });
