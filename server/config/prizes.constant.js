@@ -24,7 +24,7 @@ module.exports = {
     claimedBy: []
   },
   pyramid: {
-    isActive: false,
+    isActive: true,
     displayText: "Pyramid",
     amount: "Rs40",
     claimedBy: []
@@ -54,7 +54,7 @@ module.exports = {
     claimedBy: []
   },
   fullHouse2: {
-    isActive: false,
+    isActive: true,
     displayText: "2nd Full House",
     amount: "Rs60",
     claimedBy: []
