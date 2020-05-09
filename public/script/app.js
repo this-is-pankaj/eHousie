@@ -17,6 +17,17 @@ let boardMethods = {
   },
   enableAdminConsole() {
     $(".board-manager").removeClass("hide");
+  },
+  populateLastCalls(numList, qty) {
+    if(!qty) {
+      qty = 5;
+    }
+    if(numList && numList.length){
+      let lastCalls = numList.slice(-(qty+1), -1);
+      for(let i=0; i<lastCalls.length; i++){
+        $(".last-numbers").find(".last-number").eq(i).text(lastCalls[i]||'X');
+      }
+    }
   }
 }
 
@@ -150,6 +161,7 @@ let initialize = ()=>{
       }
       $(".new-num").text(lastPicked);
       $(`#b${lastPicked}`).addClass("last");
+      boardMethods.populateLastCalls(pickedNumbers);
     }
   });
 
@@ -193,6 +205,7 @@ let initialize = ()=>{
     // Activate the claim prize button only if the game has started
     if(data.numbersPicked && data.numbersPicked.length){
       $(".claim-btn").attr("disabled", false);
+      boardMethods.populateLastCalls(data.numbersPicked);
     }
 
     $("#picked").trigger("play");
@@ -235,6 +248,8 @@ let initialize = ()=>{
     // Activate the claim prize button only if the game was already started/in progress
     if(data.numbersPicked && data.numbersPicked.length){
       $(".claim-btn").attr("disabled", false);
+      boardMethods.populateLastCalls(data.numbersPicked);
+      $(".new-num").text(data.numbersPicked[data.numbersPicked.length-1]);
     }
 
     $(".notification").html(`<span class="notification-text">${newUser} joined </span>`).removeClass("hide");
@@ -273,7 +288,7 @@ let initialize = ()=>{
   socket.on('prizeClaim', (data)=>{
     clearNotification();
     $(".claim-notification").removeClass("hide").find('.prize-body').append(`<p class="prize-text">${data.claimedBy} has claimed for ${data.prize.text}</p>`);
-    $(`[data-prize=${data.prize.type}]`).addClass("hide");
+    $(`[data-prize=${data.prize.type}]`).attr("disabled", true);
   });
 
   socket.on('alreadyClaimed', (data)=> {
@@ -319,7 +334,7 @@ let initialize = ()=>{
     else{
       $("#boo").trigger("play");
       $(".claim-notification").removeClass("hide").find(".prize-body").append(`<p class="prize-text">${data.claimedBy} has claimed for ${data.prize.text} and has been BBOOGIEEEDD!</p>`);
-      $(`[data-prize=${data.prize.type}]`).removeClass("hide");
+      $(`[data-prize=${data.prize.type}]`).attr("disabled", false);
     }
   });
 
