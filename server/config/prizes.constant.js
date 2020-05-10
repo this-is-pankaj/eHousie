@@ -19,7 +19,7 @@ module.exports = {
   },
   corners: {
     isActive: true,
-    displayText: "Corners",
+    displayText: "6 Corners",
     amount: "Rs40",
     claimedBy: []
   },
