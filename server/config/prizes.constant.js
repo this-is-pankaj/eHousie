@@ -24,9 +24,9 @@ module.exports = {
     claimedBy: []
   },
   pyramid: {
-    isActive: false,
+    isActive: true,
     displayText: "Pyramid",
-    amount: "Rs45",
+    amount: "Rs40",
     claimedBy: []
   },
   firstLine: {
