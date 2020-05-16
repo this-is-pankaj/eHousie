@@ -1,6 +1,6 @@
 module.exports = {
   loveAtFirstCall: {
-    isActive: true,
+    isActive: false,
     displayText: "Love @ first Call",
     amount: "Rs30",
     claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
