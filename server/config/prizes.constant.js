@@ -50,17 +50,17 @@ module.exports = {
   fullHouse1: {
     isActive: true,
     displayText: "1st Full House",
-    amount: "Rs120",
+    amount: "Rs100",
     claimedBy: []
   },
   fullHouse2: {
-    isActive: true,
+    isActive: false,
     displayText: "2nd Full House",
     amount: "Rs80",
     claimedBy: []
   },
   fullHouse3: {
-    isActive: true,
+    isActive: false,
     displayText: "3rd Full House",
     amount: "Rs60",
     claimedBy: []
