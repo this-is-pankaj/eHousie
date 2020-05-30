@@ -6,7 +6,7 @@ module.exports = {
     claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
   },
   unluckyMe: {
-    isActive: false,
+    isActive: true,
     displayText: "Unlucky Me",
     amount: "Rs45",
     claimedBy: [] // {user: socket.user , id: socket.id, isClaimValid: Boolean} array
